@@ -224,11 +224,7 @@ pipeline {
 
 The plugin supports Model Context Protocol (MCP) servers for enhanced analysis capabilities:
 
-- **code2prompt**: Converts codebase to prompts via Docker
-- **docker**: Provides containerized project operations
-- **custom_api**: HTTP-based MCP servers with bearer token authentication
-
-Configure MCP servers in the global plugin configuration or use the default `~/.codex/mcp_servers.toml` file.
+Configure MCP servers in the global plugin configuration or use the default `~/.codex/config.toml` file.
 
 ## Security Considerations
 
@@ -269,7 +265,7 @@ Configure MCP servers in the global plugin configuration or use the default `~/.
 
 ### Building the Plugin
 
-```powershell
+```bash
 # Clean and build the HPI package
 mvn clean package
 
@@ -281,49 +277,25 @@ mvn compile
 
 ### Running Tests
 
-```powershell
+```bash
 mvn test
+
 # Quiet unit tests (skip integration tests)
 mvn -q -DskipITs=true test
 ```
 
-### Local Development
-
-1. Clone the repository
-2. Run `mvn hpi:run` to start Jenkins with the plugin
-3. Access Jenkins at `http://localhost:8080/jenkins`
-
-## Build and update the package
-
-This is a Jenkins plugin (packaging: `hpi`). Use Maven to build the HPI and update versions.
-
-### Prerequisites
-
-- Java 11 (matches `java.level` in `pom.xml`)
-- Maven 3.8+
-
-### 1) Build the plugin (HPI)
-
-```powershell
-# Run tests (quiet, skip ITs) then build
-mvn -q -DskipITs=true test
-mvn clean package
-
-# Result: target/codex-analysis.hpi
-```
-
-### 2) Install or update the plugin in Jenkins
+### Install the Plugin
 
 Choose one:
 
 - UI: Manage Jenkins → Manage Plugins → Advanced → Upload Plugin → select `target/codex-analysis.hpi` → Upload → Restart Jenkins
-- Filesystem: copy `target/codex-analysis.hpi` to `$Env:JENKINS_HOME\plugins\codex-analysis.hpi` and restart Jenkins
+- Filesystem: copy `target/codex-analysis.hpi` to `$JENKINS_HOME/plugins/codex-analysis.hpi` and restart Jenkins
 
-### 3) Bump the plugin version
+### Upgrade the Plugin
 
 Use the Maven Versions Plugin to update `pom.xml`:
 
-```powershell
+```bash
 # Set a specific release version
 mvn versions:set -DnewVersion=1.0.0
 
@@ -336,19 +308,13 @@ mvn versions:commit
 
 Optional helpers:
 
-```powershell
+```bash
 # Show available dependency updates
 mvn versions:display-dependency-updates
 
 # Try latest compatible releases (review carefully)
 mvn versions:use-latest-releases
 ```
-
-### 4) Release (manual)
-
-1. Build the HPI (`mvn clean package`)
-2. Create a Git tag matching the `pom.xml` version
-3. Create a GitHub Release and upload `target/codex-analysis.hpi` as an asset
 
 ## Contributing
 
@@ -358,13 +324,13 @@ mvn versions:use-latest-releases
 4. Add tests for new functionality
 5. Submit a pull request
 
-## License
-
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
-
 ## Support
 
 - **Documentation**: [Plugin Help](src/main/resources/help.html)
 - **Issues**: Create an issue in the repository
 - **Codex CLI**: [https://github.com/openai/codex](https://github.com/openai/codex)
 - **Configuration Guide**: [https://github.com/openai/codex/blob/main/docs/config.md](https://github.com/openai/codex/blob/main/docs/config.md)
+
+## License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
