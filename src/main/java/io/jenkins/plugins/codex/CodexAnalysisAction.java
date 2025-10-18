@@ -9,7 +9,6 @@ import hudson.model.Action;
 import org.jenkinsci.plugins.workflow.actions.LabelAction;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.jenkinsci.plugins.workflow.support.steps.StageStepExecution;
 
 import java.io.IOException;
 import java.util.ArrayList;

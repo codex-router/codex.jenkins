@@ -2,6 +2,7 @@ package io.jenkins.plugins.codex;
 
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.model.Result;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 
@@ -139,18 +140,15 @@ public class AnalysisContext {
         StringBuilder suggestions = new StringBuilder();
 
         if (run != null && run.getResult() != null) {
-            switch (run.getResult()) {
-                case FAILURE:
-                    suggestions.append("Build failed - focus on error analysis and troubleshooting.\n");
-                    break;
-                case UNSTABLE:
-                    suggestions.append("Build unstable - analyze test failures and warnings.\n");
-                    break;
-                case SUCCESS:
-                    suggestions.append("Build successful - focus on optimization and best practices.\n");
-                    break;
-                default:
-                    suggestions.append("Build in progress - monitor for potential issues.\n");
+            Result result = run.getResult();
+            if (result == Result.FAILURE) {
+                suggestions.append("Build failed - focus on error analysis and troubleshooting.\n");
+            } else if (result == Result.UNSTABLE) {
+                suggestions.append("Build unstable - analyze test failures and warnings.\n");
+            } else if (result == Result.SUCCESS) {
+                suggestions.append("Build successful - focus on optimization and best practices.\n");
+            } else {
+                suggestions.append("Build in progress - monitor for potential issues.\n");
             }
         }
 

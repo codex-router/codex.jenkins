@@ -28,56 +28,53 @@
     </properties>
 
     <dependencies>
-        <!-- Jenkins Core Dependencies -->
-        <dependency>
-            <groupId>io.jenkins.plugins</groupId>
-            <artifactId>pipeline-stage-step</artifactId>
-            <version>2.5</version>
-        </dependency>
+        <!-- Essential dependencies only -->
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-step-api</artifactId>
+            <version>2.23</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-api</artifactId>
+            <version>2.46</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-support</artifactId>
+            <version>3.8</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-job</artifactId>
+            <version>2.42</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-cps</artifactId>
+            <version>2.94</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>structs</artifactId>
+            <version>1.23</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>credentials</artifactId>
+            <version>2.5</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>plain-credentials</artifactId>
+            <version>1.7</version>
         </dependency>
 
-        <!-- JSON Processing -->
+        <!-- Explicitly specify higher versions to resolve conflicts -->
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-        </dependency>
-
-        <!-- HTTP Client -->
-        <dependency>
-            <groupId>org.kohsuke</groupId>
-            <artifactId>okhttp3</artifactId>
-            <version>3.14.9</version>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>script-security</artifactId>
+            <version>1.77</version>
         </dependency>
 
         <!-- Testing Dependencies -->
@@ -85,18 +82,21 @@
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-step-api</artifactId>
             <classifier>tests</classifier>
+            <version>2.23</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-job</artifactId>
             <classifier>tests</classifier>
+            <version>2.42</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-cps</artifactId>
             <classifier>tests</classifier>
+            <version>2.94</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -138,12 +138,32 @@
             <id>repo.jenkins-ci.org</id>
             <url>https://repo.jenkins-ci.org/public/</url>
         </repository>
+        <repository>
+            <id>jenkins-incrementals</id>
+            <url>https://repo.jenkins-ci.org/incrementals/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
     </repositories>
 
     <pluginRepositories>
         <pluginRepository>
             <id>repo.jenkins-ci.org</id>
             <url>https://repo.jenkins-ci.org/public/</url>
+        </pluginRepository>
+        <pluginRepository>
+            <id>jenkins-incrementals</id>
+            <url>https://repo.jenkins-ci.org/incrementals/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
         </pluginRepository>
     </pluginRepositories>
 </project>

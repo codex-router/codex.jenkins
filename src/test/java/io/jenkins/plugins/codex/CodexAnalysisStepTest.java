@@ -51,7 +51,8 @@ public class CodexAnalysisStepTest {
 
     @Test
     public void testStepDescriptor() {
-        CodexAnalysisStep.DescriptorImpl descriptor = step.getDescriptor();
+        // Avoid calling getDescriptor() which requires a Jenkins instance
+        CodexAnalysisStep.DescriptorImpl descriptor = new CodexAnalysisStep.DescriptorImpl();
         assertNotNull(descriptor);
         assertEquals("codexAnalysis", descriptor.getFunctionName());
         assertEquals("Codex Analysis", descriptor.getDisplayName());

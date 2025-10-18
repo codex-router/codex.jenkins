@@ -269,14 +269,22 @@ Configure MCP servers in the global plugin configuration or use the default `~/.
 
 ### Building the Plugin
 
-```bash
+```powershell
+# Clean and build the HPI package
 mvn clean package
+
+# (Optional) compile only
+mvn compile
+
+# HPI output: target/codex-analysis.hpi
 ```
 
 ### Running Tests
 
-```bash
+```powershell
 mvn test
+# Quiet unit tests (skip integration tests)
+mvn -q -DskipITs=true test
 ```
 
 ### Local Development
@@ -284,6 +292,63 @@ mvn test
 1. Clone the repository
 2. Run `mvn hpi:run` to start Jenkins with the plugin
 3. Access Jenkins at `http://localhost:8080/jenkins`
+
+## Build and update the package
+
+This is a Jenkins plugin (packaging: `hpi`). Use Maven to build the HPI and update versions.
+
+### Prerequisites
+
+- Java 11 (matches `java.level` in `pom.xml`)
+- Maven 3.8+
+
+### 1) Build the plugin (HPI)
+
+```powershell
+# Run tests (quiet, skip ITs) then build
+mvn -q -DskipITs=true test
+mvn clean package
+
+# Result: target/codex-analysis.hpi
+```
+
+### 2) Install or update the plugin in Jenkins
+
+Choose one:
+
+- UI: Manage Jenkins → Manage Plugins → Advanced → Upload Plugin → select `target/codex-analysis.hpi` → Upload → Restart Jenkins
+- Filesystem: copy `target/codex-analysis.hpi` to `$Env:JENKINS_HOME\plugins\codex-analysis.hpi` and restart Jenkins
+
+### 3) Bump the plugin version
+
+Use the Maven Versions Plugin to update `pom.xml`:
+
+```powershell
+# Set a specific release version
+mvn versions:set -DnewVersion=1.0.0
+
+# Or bump snapshot
+mvn versions:set -DnewVersion=1.0.1-SNAPSHOT
+
+# Write changes
+mvn versions:commit
+```
+
+Optional helpers:
+
+```powershell
+# Show available dependency updates
+mvn versions:display-dependency-updates
+
+# Try latest compatible releases (review carefully)
+mvn versions:use-latest-releases
+```
+
+### 4) Release (manual)
+
+1. Build the HPI (`mvn clean package`)
+2. Create a Git tag matching the `pom.xml` version
+3. Create a GitHub Release and upload `target/codex-analysis.hpi` as an asset
 
 ## Contributing
 
