@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<div>
+    <p>
+        This plugin provides AI-powered analysis capabilities for Jenkins pipelines using the Codex CLI.
+        It can analyze pipeline stages, steps, and script output to provide insights, suggestions, and automated responses.
+    </p>
+    <h3>Features</h3>
+    <ul>
+        <li>Pipeline step analysis using <code>codexAnalysis</code> step</li>
+        <li>Stage-level analysis with automatic context gathering</li>
+        <li>Script output analysis and interpretation</li>
+        <li>Integration with Codex CLI and MCP servers</li>
+        <li>Configurable analysis prompts and parameters</li>
+        <li>Support for both Pipeline and Freestyle jobs</li>
+    </ul>
+    <h3>Usage</h3>
+    <p>
+        Use the <code>codexAnalysis</code> step in your Pipeline scripts to analyze any content:
+    </p>
+    <pre><code>
+pipeline {
+    agent any
+    stages {
+        stage('Build') {
+            steps {
+                sh 'mvn clean compile'
+                codexAnalysis(
+                    content: 'Build completed successfully',
+                    analysisType: 'build_analysis',
+                    prompt: 'Analyze this build output and suggest improvements'
+                )
+            }
+        }
+    }
+}
+    </code></pre>
+</div>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Codex Analysis Plugin Help</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1, h2, h3 { color: #333; }
+        .code-block { background: #f5f5f5; padding: 10px; border-radius: 3px; font-family: monospace; }
+        .note { background: #e3f2fd; padding: 10px; border-left: 4px solid #2196f3; margin: 10px 0; }
+        .warning { background: #fff3e0; padding: 10px; border-left: 4px solid #ff9800; margin: 10px 0; }
+        ul, ol { margin: 10px 0; }
+        li { margin: 5px 0; }
+    </style>
+</head>
+<body>
+
+<h1>Codex Analysis Plugin Help</h1>
+
+<p>The Codex Analysis Plugin provides AI-powered analysis capabilities for Jenkins pipelines using the Codex CLI. It can analyze pipeline stages, steps, and script output to provide insights, suggestions, and automated responses.</p>
+
+<h2>Features</h2>
+<ul>
+    <li><strong>Pipeline Step Analysis:</strong> Use the <code>codexAnalysis</code> step in your Pipeline scripts</li>
+    <li><strong>Stage-level Analysis:</strong> Automatic analysis of pipeline stages</li>
+    <li><strong>Freestyle Job Support:</strong> Add Codex analysis as a build step</li>
+    <li><strong>Multiple Analysis Types:</strong> Build, test, deployment, security, performance, and quality analysis</li>
+    <li><strong>MCP Server Integration:</strong> Enhanced capabilities through Model Context Protocol servers</li>
+    <li><strong>Configurable Models:</strong> Support for various AI models</li>
+</ul>
+
+<h2>Prerequisites</h2>
+<div class="note">
+    <strong>Note:</strong> Before using this plugin, ensure you have:
+    <ul>
+        <li>Codex CLI installed and configured</li>
+        <li>Valid API keys for your chosen model provider</li>
+        <li>Network access to the model provider's API</li>
+    </ul>
+</div>
+
+<h2>Configuration</h2>
+
+<h3>Global Configuration</h3>
+<p>Configure the plugin in Jenkins → Manage Jenkins → Configure System → Codex Analysis Plugin:</p>
+<ul>
+    <li><strong>Codex CLI Path:</strong> Path to the Codex CLI executable (default: "codex")</li>
+    <li><strong>Config Path:</strong> Path to Codex configuration file (default: "~/.codex/config.toml")</li>
+    <li><strong>MCP Servers Path:</strong> Path to MCP servers configuration (default: "~/.codex/mcp_servers.toml")</li>
+    <li><strong>Default Model:</strong> Default model to use for analysis</li>
+    <li><strong>Timeout:</strong> Default timeout for analysis operations</li>
+    <li><strong>Enable MCP Servers:</strong> Enable Model Context Protocol servers</li>
+</ul>
+
+<h2>Usage Examples</h2>
+
+<h3>Pipeline Step Usage</h3>
+<p>Use the <code>codexAnalysis</code> step in your Pipeline scripts:</p>
+
+<div class="code-block">
+pipeline {
+    agent any
+    stages {
+        stage('Build') {
+            steps {
+                sh 'mvn clean compile'
+                codexAnalysis(
+                    content: 'Build completed successfully',
+                    analysisType: 'build_analysis',
+                    prompt: 'Analyze this build output and suggest improvements'
+                )
+            }
+        }
+        stage('Test') {
+            steps {
+                sh 'mvn test'
+                codexAnalysis(
+                    content: 'Test execution completed',
+                    analysisType: 'test_analysis',
+                    includeContext: true
+                )
+            }
+        }
+    }
+}
+</div>
+
+<h3>Freestyle Job Usage</h3>
+<p>Add "Codex Analysis" as a build step in your freestyle jobs:</p>
+<ol>
+    <li>Go to your job configuration</li>
+    <li>Add "Codex Analysis" build step</li>
+    <li>Configure the analysis parameters</li>
+    <li>Save and run the job</li>
+</ol>
+
+<h3>Analysis Types</h3>
+<ul>
+    <li><strong>general:</strong> General analysis and insights</li>
+    <li><strong>build_analysis:</strong> Build process and output analysis</li>
+    <li><strong>test_analysis:</strong> Test results and coverage analysis</li>
+    <li><strong>deployment_analysis:</strong> Deployment process analysis</li>
+    <li><strong>security_analysis:</strong> Security vulnerability analysis</li>
+    <li><strong>performance_analysis:</strong> Performance metrics analysis</li>
+    <li><strong>quality_analysis:</strong> Code quality and best practices analysis</li>
+</ul>
+
+<h2>Advanced Configuration</h2>
+
+<h3>MCP Servers</h3>
+<p>Model Context Protocol (MCP) servers provide additional tools and capabilities:</p>
+<ul>
+    <li><strong>code2prompt:</strong> Converts codebase to prompts via Docker</li>
+    <li><strong>docker:</strong> Provides containerized project operations</li>
+    <li><strong>custom_api:</strong> HTTP-based MCP servers with bearer token authentication</li>
+</ul>
+
+<h3>Environment Variables</h3>
+<p>Set required environment variables in your shell or Jenkins environment:</p>
+<div class="code-block">
+export LITELLM_API_KEY=your_api_key_here
+export CUSTOM_API_TOKEN=your_token_here
+</div>
+
+<h2>Troubleshooting</h2>
+
+<h3>Common Issues</h3>
+<ul>
+    <li><strong>Codex CLI not found:</strong> Ensure the CLI is installed and in PATH</li>
+    <li><strong>API key issues:</strong> Verify your API keys are correctly set</li>
+    <li><strong>Timeout errors:</strong> Increase the timeout value for long-running analyses</li>
+    <li><strong>MCP server errors:</strong> Check MCP server configuration and dependencies</li>
+</ul>
+
+<h3>Debug Information</h3>
+<p>Check the build logs for detailed error messages and debug information. The plugin provides comprehensive logging for troubleshooting.</p>
+
+<h2>Security Considerations</h2>
+<div class="warning">
+    <strong>Warning:</strong> Be aware of the following security considerations:
+    <ul>
+        <li>API keys and tokens are sensitive information - store them securely</li>
+        <li>Analysis content may be sent to external services - review data sensitivity</li>
+        <li>MCP servers may have access to your workspace - only enable trusted servers</li>
+        <li>Review and validate analysis results before taking action</li>
+    </ul>
+</div>
+
+<h2>Support</h2>
+<p>For more information and support:</p>
+<ul>
+    <li>Plugin documentation: <a href="https://github.com/openai/codex">https://github.com/openai/codex</a></li>
+    <li>Codex CLI documentation: <a href="https://github.com/openai/codex/blob/main/docs/config.md">Configuration Guide</a></li>
+    <li>Report issues: Create an issue in the plugin repository</li>
+</ul>
+
+</body>
+</html>

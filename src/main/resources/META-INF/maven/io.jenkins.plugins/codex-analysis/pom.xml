@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.jenkins.plugins</groupId>
+        <artifactId>codex-analysis</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>codex-analysis</artifactId>
+    <packaging>hpi</packaging>
+
+    <name>Codex Analysis Plugin</name>
+    <description>Jenkins plugin for AI-powered analysis of pipeline stages, steps, and script output using Codex CLI</description>
+</project>

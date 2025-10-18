@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+    <f:section title="Codex Analysis Plugin Configuration">
+        <f:entry title="Codex CLI Path" field="codexCliPath" description="Path to the Codex CLI executable. Default: 'codex'">
+            <f:textbox default="codex" />
+        </f:entry>
+
+        <f:entry title="Config Path" field="configPath" description="Path to Codex configuration file. Default: '~/.codex/config.toml'">
+            <f:textbox default="~/.codex/config.toml" />
+        </f:entry>
+
+        <f:entry title="MCP Servers Path" field="mcpServersPath" description="Path to MCP servers configuration file. Default: '~/.codex/mcp_servers.toml'">
+            <f:textbox default="~/.codex/mcp_servers.toml" />
+        </f:entry>
+
+        <f:entry title="Default Model" field="defaultModel" description="Default model to use for analysis. Default: 'kimi-k2'">
+            <f:select />
+        </f:entry>
+
+        <f:entry title="Timeout (seconds)" field="timeoutSeconds" description="Default timeout for analysis operations in seconds. Default: 120">
+            <f:number default="120" min="10" max="3600" />
+        </f:entry>
+
+        <f:entry title="Enable MCP Servers" field="enableMcpServers" description="Enable Model Context Protocol servers for enhanced analysis capabilities">
+            <f:checkbox default="true" />
+        </f:entry>
+
+        <f:entry title="MCP Server Configurations" description="Configure MCP servers for enhanced analysis capabilities">
+            <f:repeatableProperty field="mcpServers" add="Add MCP Server" />
+        </f:entry>
+    </f:section>
+
+    <f:section title="Test Configuration">
+        <f:entry>
+            <f:validateButton title="Test Codex CLI"
+                             method="testCodexCli"
+                             with="codexCliPath,configPath" />
+        </f:entry>
+    </f:section>
+
+</j:jelly>

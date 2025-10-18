@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+    <f:entry title="Content to Analyze" field="content" description="Content to analyze. Can be build output, logs, or any text. Leave empty to analyze build context.">
+        <f:textarea />
+    </f:entry>
+
+    <f:entry title="Analysis Type" field="analysisType" description="Type of analysis to perform">
+        <f:select />
+    </f:entry>
+
+    <f:entry title="Custom Prompt" field="prompt" description="Custom prompt for analysis. Leave empty to use default prompt for the analysis type.">
+        <f:textarea />
+    </f:entry>
+
+    <f:entry title="Model" field="model" description="Model to use for analysis. Leave empty to use default model from global configuration.">
+        <f:select />
+    </f:entry>
+
+    <f:entry title="Timeout (seconds)" field="timeoutSeconds" description="Timeout for analysis operation in seconds">
+        <f:number default="120" min="10" max="3600" />
+    </f:entry>
+
+    <f:entry title="Include Build Context" field="includeBuildContext" description="Include build environment and context information in analysis">
+        <f:checkbox default="true" />
+    </f:entry>
+
+    <f:entry title="Fail on Error" field="failOnError" description="Fail the build if analysis encounters an error">
+        <f:checkbox default="false" />
+    </f:entry>
+
+    <f:entry title="Additional Parameters" field="additionalParams" description="Additional parameters in key=value format, one per line">
+        <f:textarea />
+    </f:entry>
+
+</j:jelly>
