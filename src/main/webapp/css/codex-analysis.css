@@ -1,0 +1,39 @@
+/* Codex Analysis Plugin Icon Styles */
+.icon-codex-analysis {
+    background-image: url('images/codex-analysis.svg');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+}
+
+/* Icon size variants */
+.icon-codex-analysis.icon-sm {
+    width: 16px;
+    height: 16px;
+}
+
+.icon-codex-analysis.icon-md {
+    width: 24px;
+    height: 24px;
+}
+
+.icon-codex-analysis.icon-lg {
+    width: 32px;
+    height: 32px;
+}
+
+.icon-codex-analysis.icon-xlg {
+    width: 48px;
+    height: 48px;
+}
+
+/* Analysis status indicators */
+.analysis-status.has-issues {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.analysis-status.no-issues {
+    background: #e8f5e8;
+    color: #2e7d32;
+}

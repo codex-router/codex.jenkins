@@ -39,7 +39,7 @@ public class CodexAnalysisAction implements Action {
 
     @Override
     public String getIconFileName() {
-        return "symbol-brain";
+        return "codex-analysis.svg";
     }
 
     @Override

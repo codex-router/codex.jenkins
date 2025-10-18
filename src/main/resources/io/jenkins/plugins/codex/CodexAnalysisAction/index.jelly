@@ -5,11 +5,12 @@
 <l:layout title="Codex Analysis - ${it.stageName}">
     <l:header>
         <st:include it="${it.run}" page="sidepanel.jelly" />
+        <link rel="stylesheet" href="${resURL}/plugin/codex-analysis/css/codex-analysis.css" />
     </l:header>
 
     <l:main-panel>
         <h1>
-            <img src="${resURL}/plugin/codex-analysis/images/codex-icon.png" width="24" height="24" />
+            <l:icon class="icon-codex-analysis icon-md" />
             Codex Analysis - ${it.stageName}
         </h1>
 
