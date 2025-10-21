@@ -218,7 +218,6 @@ pipeline {
 
 - Check build logs for detailed error messages
 - Use the "Test Codex CLI" button in global configuration
-- Verify environment variables and API connectivity
 - Review analysis content and prompts for quality
 
 ## Development
