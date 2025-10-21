@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+    <f:entry title="Name" field="name" description="Unique name for this MCP server">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="Type" field="type" description="Server type: stdio or http">
+        <f:select>
+            <f:option value="stdio" selected="${instance.type == 'stdio'}">stdio</f:option>
+            <f:option value="http" selected="${instance.type == 'http'}">http</f:option>
+        </f:select>
+    </f:entry>
+
+    <f:entry title="Enabled" field="enabled" description="Enable this MCP server">
+        <f:checkbox default="true" />
+    </f:entry>
+
+    <f:advanced>
+        <f:entry title="Command" field="command" description="Command to execute for stdio servers">
+            <f:textbox />
+        </f:entry>
+
+        <f:entry title="Arguments" field="args" description="Command line arguments for stdio servers">
+            <f:textbox />
+        </f:entry>
+
+        <f:entry title="URL" field="url" description="HTTP URL for http servers">
+            <f:textbox />
+        </f:entry>
+
+        <f:entry title="Bearer Token Environment Variable" field="bearerTokenEnvVar" description="Environment variable containing bearer token for http servers">
+            <f:textbox />
+        </f:entry>
+
+        <f:entry title="Startup Timeout (seconds)" field="startupTimeoutSec" description="Timeout for server startup">
+            <f:number default="10" min="1" max="300" />
+        </f:entry>
+
+        <f:entry title="Tool Timeout (seconds)" field="toolTimeoutSec" description="Timeout for individual tool calls">
+            <f:number default="60" min="1" max="1800" />
+        </f:entry>
+    </f:advanced>
+
+</j:jelly>

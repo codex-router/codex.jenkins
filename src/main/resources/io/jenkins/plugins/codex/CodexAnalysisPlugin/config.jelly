@@ -26,16 +26,12 @@
         <f:entry title="Enable MCP Servers" field="enableMcpServers" description="Enable Model Context Protocol servers for enhanced analysis capabilities">
             <f:checkbox default="true" />
         </f:entry>
-
-        <f:entry title="MCP Server Configurations" description="Configure MCP servers for enhanced analysis capabilities">
-            <f:repeatableProperty field="mcpServers" add="Add MCP Server" />
-        </f:entry>
     </f:section>
 
     <f:section title="Test Configuration">
         <f:entry>
             <f:validateButton title="Test Codex CLI"
-                             method="testCodexCli"
+                             method="doTestCodexCli"
                              with="codexCliPath,configPath" />
         </f:entry>
     </f:section>

@@ -1,11 +1,18 @@
 package io.jenkins.plugins.codex;
 
 import hudson.Extension;
+import hudson.model.Describable;
 import hudson.model.Descriptor;
+import hudson.model.Descriptor.FormException;
 import hudson.util.DescribableList;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import jenkins.model.GlobalConfiguration;
+import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 import java.util.ArrayList;
@@ -16,6 +23,7 @@ import java.util.List;
  * Manages Codex CLI settings and MCP server configurations.
  */
 @Extension
+@Symbol("codexAnalysis")
 public class CodexAnalysisPlugin extends GlobalConfiguration {
 
     private String codexCliPath = "codex";
@@ -33,6 +41,11 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
 
     public static CodexAnalysisPlugin get() {
         return GlobalConfiguration.all().get(CodexAnalysisPlugin.class);
+    }
+
+    @Override
+    public String getDisplayName() {
+        return "Codex Analysis Plugin";
     }
 
     @Override
@@ -102,7 +115,7 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
     /**
      * MCP Server Configuration
      */
-    public static class McpServerConfig {
+    public static class McpServerConfig implements Describable<McpServerConfig> {
         private String name;
         private String type; // "stdio" or "http"
         private String command;
@@ -115,6 +128,19 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
 
         @DataBoundConstructor
         public McpServerConfig() {}
+
+        @Override
+        public Descriptor<McpServerConfig> getDescriptor() {
+            return Jenkins.get().getDescriptorOrDie(McpServerConfig.class);
+        }
+
+        @Extension
+        public static class DescriptorImpl extends Descriptor<McpServerConfig> {
+            @Override
+            public String getDisplayName() {
+                return "MCP Server Configuration";
+            }
+        }
 
         // Getters and Setters
         public String getName() { return name; }
@@ -143,5 +169,113 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
 
         public boolean isEnabled() { return enabled; }
         public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    }
+
+    /**
+     * Validation methods for configuration fields
+     */
+
+    /**
+     * Validate Codex CLI path
+     */
+    public FormValidation doCheckCodexCliPath(@QueryParameter String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return FormValidation.warning("Codex CLI path is empty, will use 'codex'");
+        }
+        return FormValidation.ok();
+    }
+
+    /**
+     * Validate config path
+     */
+    public FormValidation doCheckConfigPath(@QueryParameter String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return FormValidation.warning("Config path is empty, will use '~/.codex/config.toml'");
+        }
+        return FormValidation.ok();
+    }
+
+    /**
+     * Validate timeout
+     */
+    public FormValidation doCheckTimeoutSeconds(@QueryParameter String value) {
+        try {
+            int timeout = Integer.parseInt(value);
+            if (timeout <= 0) {
+                return FormValidation.error("Timeout must be positive");
+            }
+            if (timeout > 3600) {
+                return FormValidation.warning("Very long timeout may cause build delays");
+            }
+            return FormValidation.ok();
+        } catch (NumberFormatException e) {
+            return FormValidation.error("Invalid timeout value");
+        }
+    }
+
+    /**
+     * Validate default model
+     */
+    public FormValidation doCheckDefaultModel(@QueryParameter String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return FormValidation.warning("Default model is empty, will use 'kimi-k2'");
+        }
+        return FormValidation.ok();
+    }
+
+    /**
+     * Test Codex CLI connectivity
+     */
+    public FormValidation doTestCodexCli(@QueryParameter String codexCliPath, @QueryParameter String configPath) {
+        try {
+            // Basic validation
+            if (codexCliPath == null || codexCliPath.trim().isEmpty()) {
+                codexCliPath = "codex";
+            }
+            if (configPath == null || configPath.trim().isEmpty()) {
+                configPath = "~/.codex/config.toml";
+            }
+
+            // Try to execute codex --version to test connectivity
+            ProcessBuilder pb = new ProcessBuilder(codexCliPath, "--version");
+            Process process = pb.start();
+            int exitCode = process.waitFor();
+
+            if (exitCode == 0) {
+                return FormValidation.ok("Codex CLI is accessible and working");
+            } else {
+                return FormValidation.warning("Codex CLI returned exit code: " + exitCode);
+            }
+        } catch (Exception e) {
+            return FormValidation.error("Failed to test Codex CLI: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Get available model options for the select dropdown
+     */
+    public List<String> getModelOptions() {
+        List<String> models = new ArrayList<>();
+        models.add("kimi-k2");
+        models.add("gpt-4");
+        models.add("gpt-4-turbo");
+        models.add("gpt-3.5-turbo");
+        models.add("claude-3-opus");
+        models.add("claude-3-sonnet");
+        models.add("claude-3-haiku");
+        models.add("gemini-pro");
+        models.add("gemini-pro-vision");
+        return models;
+    }
+
+    /**
+     * Fill default model items for the dropdown
+     */
+    public ListBoxModel doFillDefaultModelItems() {
+        ListBoxModel items = new ListBoxModel();
+        for (String model : getModelOptions()) {
+            items.add(model, model);
+        }
+        return items;
     }
 }
