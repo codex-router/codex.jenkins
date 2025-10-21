@@ -28,7 +28,7 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
 
     private String codexCliPath = "codex";
     private String configPath = "~/.codex/config.toml";
-    private String mcpServersPath = "~/.codex/mcp_servers.toml";
+    private String mcpServersPath = "~/.codex/config.toml";
     private String defaultModel = "kimi-k2";
     private int timeoutSeconds = 120;
     private boolean enableMcpServers = true;

@@ -11,8 +11,8 @@
             <f:textbox default="~/.codex/config.toml" />
         </f:entry>
 
-        <f:entry title="MCP Servers Path" field="mcpServersPath" description="Path to MCP servers configuration file. Default: '~/.codex/mcp_servers.toml'">
-            <f:textbox default="~/.codex/mcp_servers.toml" />
+        <f:entry title="MCP Servers Path" field="mcpServersPath" description="Path to MCP servers configuration file. Default: '~/.codex/config.toml'">
+            <f:textbox default="~/.codex/config.toml" />
         </f:entry>
 
         <f:entry title="Default Model" field="defaultModel" description="Default model to use for analysis. Default: 'kimi-k2'">
