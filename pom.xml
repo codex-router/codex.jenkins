@@ -12,12 +12,12 @@
 
     <groupId>io.jenkins.plugins</groupId>
     <artifactId>codex-analysis</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>hpi</packaging>
 
     <name>Codex Analysis Plugin</name>
     <description>Jenkins plugin for AI-powered analysis of pipeline stages, steps, and script output using Codex CLI</description>
-    <url>https://github.com/openai/codex</url>
+    <url>https://github.com/codex-router/codex.jenkins</url>
 
     <properties>
         <jenkins.version>2.426.3</jenkins.version>

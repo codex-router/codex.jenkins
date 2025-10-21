@@ -8,7 +8,6 @@ A Jenkins plugin that provides AI-powered analysis capabilities for pipeline sta
 - **Stage-level Analysis**: Automatic analysis of pipeline stages with context gathering
 - **Freestyle Job Support**: Add Codex analysis as a build step in freestyle jobs
 - **Multiple Analysis Types**: Build, test, deployment, security, performance, and quality analysis
-- **MCP Server Integration**: Enhanced capabilities through Model Context Protocol servers
 - **Configurable Models**: Support for various AI models (GPT-4, Claude, Gemini, etc.)
 - **Rich UI**: Detailed analysis results with issue detection and summaries
 
@@ -17,15 +16,11 @@ A Jenkins plugin that provides AI-powered analysis capabilities for pipeline sta
 Before using this plugin, ensure you have:
 
 1. **Codex CLI installed and configured**
-   - Follow the installation guide at [codex.sh](../codex.sh/README.md)
+   - Follow the installation guide at [codex.sh](https://github.com/codex-router/codex.sh/blob/main/README.md)
    - Ensure the CLI is in your system PATH
    - Configure your API keys and model settings
 
-2. **Valid API keys** for your chosen model provider
-   - LiteLLM API key for most models
-   - Custom API tokens for specific providers
-
-3. **Network access** to the model provider's API
+2. **Network access** to the model provider's API
 
 ## Installation
 
@@ -36,25 +31,12 @@ Before using this plugin, ensure you have:
 
 ## Configuration
 
-### Global Configuration
-
 Configure the plugin in **Manage Jenkins** → **Configure System** → **Codex Analysis Plugin**:
 
 - **Codex CLI Path**: Path to the Codex CLI executable (default: "codex")
 - **Config Path**: Path to Codex configuration file (default: "~/.codex/config.toml")
-- **MCP Servers Path**: Path to MCP servers configuration (default: "~/.codex/mcp_servers.toml")
 - **Default Model**: Default model to use for analysis
 - **Timeout**: Default timeout for analysis operations (seconds)
-- **Enable MCP Servers**: Enable Model Context Protocol servers for enhanced capabilities
-
-### Environment Variables
-
-Set up required environment variables:
-
-```bash
-export LITELLM_API_KEY=your_api_key_here
-export CUSTOM_API_TOKEN=your_token_here  # if using custom MCP servers
-```
 
 ## Usage
 
@@ -65,6 +47,7 @@ Use the `codexAnalysis` step in your Pipeline scripts:
 ```groovy
 pipeline {
     agent any
+
     stages {
         stage('Build') {
             steps {
@@ -76,6 +59,7 @@ pipeline {
                 )
             }
         }
+
         stage('Test') {
             steps {
                 sh 'mvn test'
@@ -121,9 +105,6 @@ pipeline {
 ```groovy
 pipeline {
     agent any
-    environment {
-        LITELLM_API_KEY = credentials('litellm-api-key')
-    }
 
     stages {
         stage('Build') {
@@ -191,6 +172,7 @@ pipeline {
 ```groovy
 pipeline {
     agent any
+
     stages {
         stage('Advanced Analysis') {
             steps {
@@ -220,19 +202,6 @@ pipeline {
 }
 ```
 
-## MCP Server Integration
-
-The plugin supports Model Context Protocol (MCP) servers for enhanced analysis capabilities:
-
-Configure MCP servers in the global plugin configuration or use the default `~/.codex/config.toml` file.
-
-## Security Considerations
-
-- **API Keys**: Store API keys securely using Jenkins credentials
-- **Data Sensitivity**: Be aware that analysis content may be sent to external services
-- **MCP Servers**: Only enable trusted MCP servers with appropriate permissions
-- **Review Results**: Always review and validate analysis results before taking action
-
 ## Troubleshooting
 
 ### Common Issues
@@ -241,18 +210,9 @@ Configure MCP servers in the global plugin configuration or use the default `~/.
    - Ensure the CLI is installed and in PATH
    - Check the "Codex CLI Path" configuration
 
-2. **API key issues**
-   - Verify API keys are correctly set in environment variables
-   - Check the Codex configuration file
-
-3. **Timeout errors**
+2. **Timeout errors**
    - Increase the timeout value for complex analyses
    - Check network connectivity to API endpoints
-
-4. **MCP server errors**
-   - Verify MCP server configuration
-   - Check required dependencies (Docker, network access)
-   - Review MCP server logs
 
 ### Debug Information
 
