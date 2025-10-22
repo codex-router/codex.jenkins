@@ -7,6 +7,7 @@ import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
+import hudson.model.Job;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.tasks.BuildStepDescriptor;
@@ -58,9 +59,15 @@ public class CodexAnalysisBuilder extends Builder {
         try {
             listener.getLogger().println("Starting Codex analysis...");
 
+            // Get job-level configuration if available
+            CodexAnalysisJobProperty jobConfig = null;
+            if (run.getParent() instanceof Job) {
+                jobConfig = ((Job<?, ?>) run.getParent()).getProperty(CodexAnalysisJobProperty.class);
+            }
+
             // Check if Codex CLI is available
             EnvVars environment = run.getEnvironment(listener);
-            CodexCliExecutor executor = new CodexCliExecutor(launcher, listener, environment, workspace);
+            CodexCliExecutor executor = new CodexCliExecutor(launcher, listener, environment, workspace, jobConfig);
 
             if (!executor.isCodexAvailable()) {
                 String error = "Codex CLI is not available. Please ensure it's installed and configured.";
@@ -89,11 +96,23 @@ public class CodexAnalysisBuilder extends Builder {
 
             // Parse additional parameters
             Map<String, String> params = parseAdditionalParams(additionalParams);
-            if (model != null && !model.trim().isEmpty()) {
-                params.put("model", model);
+
+            // Use job-level model if specified, otherwise use step-level model, otherwise use job default
+            String effectiveModel = model;
+            if ((effectiveModel == null || effectiveModel.trim().isEmpty()) && jobConfig != null) {
+                effectiveModel = jobConfig.getEffectiveDefaultModel();
             }
-            if (timeoutSeconds > 0) {
-                params.put("timeout", String.valueOf(timeoutSeconds));
+            if (effectiveModel != null && !effectiveModel.trim().isEmpty()) {
+                params.put("model", effectiveModel);
+            }
+
+            // Use job-level timeout if specified, otherwise use step-level timeout, otherwise use job default
+            int effectiveTimeout = timeoutSeconds;
+            if (effectiveTimeout <= 0 && jobConfig != null) {
+                effectiveTimeout = jobConfig.getEffectiveTimeoutSeconds();
+            }
+            if (effectiveTimeout > 0) {
+                params.put("timeout", String.valueOf(effectiveTimeout));
             }
 
             // Execute analysis

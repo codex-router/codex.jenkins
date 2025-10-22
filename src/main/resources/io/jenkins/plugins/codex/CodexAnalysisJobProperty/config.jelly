@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+    <f:section title="Codex Analysis Plugin Configuration">
+        <f:entry title="Use Job-Level Configuration" field="useJobConfig" description="Enable job-specific configuration. If disabled, global configuration will be used.">
+            <f:checkbox default="false" />
+        </f:entry>
+
+        <f:advanced>
+            <f:entry title="Codex CLI Path" field="codexCliPath" description="Path to the Codex CLI executable. Leave empty to use global configuration.">
+                <f:textbox />
+            </f:entry>
+
+            <f:entry title="Config Path" field="configPath" description="Path to Codex configuration file. Leave empty to use global configuration.">
+                <f:textbox />
+            </f:entry>
+
+            <f:entry title="MCP Servers Path" field="mcpServersPath" description="Path to MCP servers configuration file. Leave empty to use global configuration.">
+                <f:textbox />
+            </f:entry>
+
+            <f:entry title="Default Model" field="defaultModel" description="Default model to use for analysis. Leave empty to use global configuration.">
+                <f:select />
+            </f:entry>
+
+            <f:entry title="Timeout (seconds)" field="timeoutSeconds" description="Default timeout for analysis operations in seconds. Leave empty to use global configuration.">
+                <f:number min="10" max="3600" />
+            </f:entry>
+
+            <f:entry title="Enable MCP Servers" field="enableMcpServers" description="Enable Model Context Protocol servers for enhanced analysis capabilities">
+                <f:checkbox default="true" />
+            </f:entry>
+        </f:advanced>
+    </f:section>
+
+    <f:section title="Test Configuration">
+        <f:entry title="Test Codex CLI" description="Test the Codex CLI configuration on the node where this job will run. This ensures proper node binding and CLI accessibility.">
+            <f:validateButton title="Test Codex CLI"
+                             method="doTestCodexCli"
+                             with="codexCliPath,configPath" />
+        </f:entry>
+    </f:section>
+
+</j:jelly>

@@ -22,12 +22,18 @@ public class CodexCliExecutor {
     private final TaskListener listener;
     private final EnvVars environment;
     private final FilePath workspace;
+    private final CodexAnalysisJobProperty jobConfig;
 
     public CodexCliExecutor(Launcher launcher, TaskListener listener, EnvVars environment, FilePath workspace) {
+        this(launcher, listener, environment, workspace, null);
+    }
+
+    public CodexCliExecutor(Launcher launcher, TaskListener listener, EnvVars environment, FilePath workspace, CodexAnalysisJobProperty jobConfig) {
         this.launcher = launcher;
         this.listener = listener;
         this.environment = environment;
         this.workspace = workspace;
+        this.jobConfig = jobConfig;
     }
 
     /**
@@ -35,13 +41,16 @@ public class CodexCliExecutor {
      */
     public CodexAnalysisResult executeAnalysis(String content, String analysisType, String customPrompt,
                                              Map<String, String> additionalParams) throws IOException, InterruptedException {
-        CodexAnalysisPlugin config = CodexAnalysisPlugin.get();
-        if (config == null) {
+        CodexAnalysisPlugin globalConfig = CodexAnalysisPlugin.get();
+        if (globalConfig == null) {
             throw new IOException("Codex Analysis Plugin configuration not found");
         }
 
         ArgumentListBuilder args = new ArgumentListBuilder();
-        args.add(config.getCodexCliPath());
+
+        // Use job-level CLI path if available, otherwise use global
+        String cliPath = jobConfig != null ? jobConfig.getEffectiveCodexCliPath() : globalConfig.getCodexCliPath();
+        args.add(cliPath);
         args.add("analyze");
 
         // Add content
@@ -57,15 +66,25 @@ public class CodexCliExecutor {
             args.add("--prompt", customPrompt);
         }
 
-        // Add model
-        args.add("--model", config.getDefaultModel());
+        // Add model - use additional params first, then job config, then global
+        String model = additionalParams != null ? additionalParams.get("model") : null;
+        if (StringUtils.isBlank(model)) {
+            model = jobConfig != null ? jobConfig.getEffectiveDefaultModel() : globalConfig.getDefaultModel();
+        }
+        args.add("--model", model);
 
-        // Add timeout
-        args.add("--timeout", String.valueOf(config.getTimeoutSeconds()));
+        // Add timeout - use additional params first, then job config, then global
+        String timeout = additionalParams != null ? additionalParams.get("timeout") : null;
+        if (StringUtils.isBlank(timeout)) {
+            timeout = String.valueOf(jobConfig != null ? jobConfig.getEffectiveTimeoutSeconds() : globalConfig.getTimeoutSeconds());
+        }
+        args.add("--timeout", timeout);
 
         // Add MCP servers if enabled
-        if (config.isEnableMcpServers()) {
-            args.add("--mcp-config", config.getMcpServersPath());
+        boolean enableMcp = jobConfig != null ? jobConfig.getEffectiveEnableMcpServers() : globalConfig.isEnableMcpServers();
+        if (enableMcp) {
+            String mcpPath = jobConfig != null ? jobConfig.getEffectiveMcpServersPath() : globalConfig.getMcpServersPath();
+            args.add("--mcp-config", mcpPath);
         }
 
         // Add additional parameters
@@ -112,21 +131,28 @@ public class CodexCliExecutor {
      * Execute a simple Codex query
      */
     public String executeQuery(String query, String context) throws IOException, InterruptedException {
-        CodexAnalysisPlugin config = CodexAnalysisPlugin.get();
-        if (config == null) {
+        CodexAnalysisPlugin globalConfig = CodexAnalysisPlugin.get();
+        if (globalConfig == null) {
             throw new IOException("Codex Analysis Plugin configuration not found");
         }
 
         ArgumentListBuilder args = new ArgumentListBuilder();
-        args.add(config.getCodexCliPath());
+
+        // Use job-level CLI path if available, otherwise use global
+        String cliPath = jobConfig != null ? jobConfig.getEffectiveCodexCliPath() : globalConfig.getCodexCliPath();
+        args.add(cliPath);
         args.add("query");
 
         args.add("--query", query);
         if (StringUtils.isNotBlank(context)) {
             args.add("--context", context);
         }
-        args.add("--model", config.getDefaultModel());
-        args.add("--timeout", String.valueOf(config.getTimeoutSeconds()));
+
+        // Use job-level model and timeout if available, otherwise use global
+        String model = jobConfig != null ? jobConfig.getEffectiveDefaultModel() : globalConfig.getDefaultModel();
+        int timeout = jobConfig != null ? jobConfig.getEffectiveTimeoutSeconds() : globalConfig.getTimeoutSeconds();
+        args.add("--model", model);
+        args.add("--timeout", String.valueOf(timeout));
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         PrintStream printStream = new PrintStream(outputStream);
@@ -156,13 +182,16 @@ public class CodexCliExecutor {
      * Check if Codex CLI is available and properly configured
      */
     public boolean isCodexAvailable() throws IOException, InterruptedException {
-        CodexAnalysisPlugin config = CodexAnalysisPlugin.get();
-        if (config == null) {
+        CodexAnalysisPlugin globalConfig = CodexAnalysisPlugin.get();
+        if (globalConfig == null) {
             return false;
         }
 
         ArgumentListBuilder args = new ArgumentListBuilder();
-        args.add(config.getCodexCliPath());
+
+        // Use job-level CLI path if available, otherwise use global
+        String cliPath = jobConfig != null ? jobConfig.getEffectiveCodexCliPath() : globalConfig.getCodexCliPath();
+        args.add(cliPath);
         args.add("--version");
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

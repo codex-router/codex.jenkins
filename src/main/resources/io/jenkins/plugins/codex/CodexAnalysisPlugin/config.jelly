@@ -28,12 +28,4 @@
         </f:entry>
     </f:section>
 
-    <f:section title="Test Configuration">
-        <f:entry>
-            <f:validateButton title="Test Codex CLI"
-                             method="doTestCodexCli"
-                             with="codexCliPath,configPath" />
-        </f:entry>
-    </f:section>
-
 </j:jelly>

@@ -223,33 +223,6 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
         return FormValidation.ok();
     }
 
-    /**
-     * Test Codex CLI connectivity
-     */
-    public FormValidation doTestCodexCli(@QueryParameter String codexCliPath, @QueryParameter String configPath) {
-        try {
-            // Basic validation
-            if (codexCliPath == null || codexCliPath.trim().isEmpty()) {
-                codexCliPath = "codex";
-            }
-            if (configPath == null || configPath.trim().isEmpty()) {
-                configPath = "~/.codex/config.toml";
-            }
-
-            // Try to execute codex --version to test connectivity
-            ProcessBuilder pb = new ProcessBuilder(codexCliPath, "--version");
-            Process process = pb.start();
-            int exitCode = process.waitFor();
-
-            if (exitCode == 0) {
-                return FormValidation.ok("Codex CLI is accessible and working");
-            } else {
-                return FormValidation.warning("Codex CLI returned exit code: " + exitCode);
-            }
-        } catch (Exception e) {
-            return FormValidation.error("Failed to test Codex CLI: " + e.getMessage());
-        }
-    }
 
     /**
      * Get available model options for the select dropdown

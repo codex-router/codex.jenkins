@@ -9,6 +9,7 @@ A Jenkins plugin that provides AI-powered analysis capabilities for pipeline sta
 - **Freestyle Job Support**: Add Codex analysis as a build step in freestyle jobs
 - **Multiple Analysis Types**: Build, test, deployment, security, performance, and quality analysis
 - **Configurable Models**: Support for various AI models (GPT-4, Claude, Gemini, etc.)
+- **Job-Level Configuration**: Configure Codex settings per job with node-specific testing
 - **Rich UI**: Detailed analysis results with issue detection and summaries
 
 ## Prerequisites
@@ -31,12 +32,64 @@ Before using this plugin, ensure you have:
 
 ## Configuration
 
-Configure the plugin in **Manage Jenkins** → **Configure System** → **Codex Analysis Plugin**:
+### Global Configuration
+
+Configure the plugin globally in **Manage Jenkins** → **Configure System** → **Codex Analysis Plugin**:
+
+![System Configuration](system-config.png)
 
 - **Codex CLI Path**: Path to the Codex CLI executable (default: "codex")
 - **Config Path**: Path to Codex configuration file (default: "~/.codex/config.toml")
-- **Default Model**: Default model to use for analysis
-- **Timeout**: Default timeout for analysis operations (seconds)
+- **MCP Servers Path**: Path to MCP servers configuration file (default: "~/.codex/config.toml")
+- **Default Model**: Default model to use for analysis (default: "kimi-k2")
+- **Timeout**: Default timeout for analysis operations in seconds (default: 120)
+- **Enable MCP Servers**: Enable Model Context Protocol servers for enhanced analysis capabilities
+
+### Job-Level Configuration
+
+You can also configure Codex settings per job by adding the **Codex Analysis Plugin Configuration** in the job's configuration page:
+
+![Job Configuration](job-config.png)
+
+1. Go to your job's configuration page
+2. Scroll down to find **Codex Analysis Plugin Configuration**
+3. Enable **Use Job-Level Configuration** to override global settings
+4. Configure job-specific settings:
+   - **Codex CLI Path**: Override the global CLI path for this job
+   - **Config Path**: Override the global config path for this job
+   - **MCP Servers Path**: Override the global MCP servers path for this job
+   - **Default Model**: Override the global default model for this job
+   - **Timeout**: Override the global timeout for this job
+   - **Enable MCP Servers**: Override the global MCP servers setting for this job
+5. Use the **Test Codex CLI** button to verify the CLI is accessible on the node where this job will run
+
+**Note**: CLI testing is only available at the job level to ensure proper node binding. This allows you to test the Codex CLI configuration in the context of the specific node where your job will execute.
+
+Job-level settings take precedence over global settings when enabled. If a job-level setting is empty, the global setting will be used as fallback.
+
+### Configuration Hierarchy
+
+The plugin uses a three-tier configuration hierarchy:
+
+1. **Step/Builder Level** (Highest Priority)
+   - Parameters specified directly in the `codexAnalysis` step or build step
+   - Overrides both job-level and global settings
+
+2. **Job Level** (Medium Priority)
+   - Settings configured in the job's "Codex Analysis Plugin Configuration"
+   - Only applies when "Use Job-Level Configuration" is enabled
+   - Overrides global settings
+
+3. **Global Level** (Lowest Priority)
+   - System-wide settings in "Manage Jenkins" → "Configure System"
+   - Used as fallback when job-level settings are empty or disabled
+
+### Best Practices
+
+- **Global Configuration**: Set sensible defaults for your organization
+- **Job-Level Configuration**: Use for jobs that need specific CLI paths or models
+- **Node Testing**: Always test CLI accessibility at the job level to ensure proper node binding
+- **Fallback Strategy**: Leave job-level settings empty to inherit global defaults
 
 ## Usage
 
@@ -202,23 +255,73 @@ pipeline {
 }
 ```
 
+### Job-Level Configuration Example
+
+For jobs that need specific Codex CLI configurations:
+
+1. **Configure Job-Level Settings**:
+   - Go to your job's configuration page
+   - Find "Codex Analysis Plugin Configuration"
+   - Enable "Use Job-Level Configuration"
+   - Set job-specific values:
+     - **Codex CLI Path**: `/usr/local/bin/codex` (if different from global)
+     - **Default Model**: `claude-3-opus` (for this specific job)
+     - **Timeout**: `300` (longer timeout for complex analysis)
+
+2. **Test Configuration**:
+   - Click "Test Codex CLI" to verify the CLI is accessible on the node
+   - Ensure the test passes before running the job
+
+3. **Use in Pipeline**:
+   ```groovy
+   pipeline {
+       agent any
+
+       stages {
+           stage('Analysis') {
+               steps {
+                   // This will use job-level configuration
+                   codexAnalysis(
+                       content: 'Build output here',
+                       analysisType: 'build_analysis'
+                       // model and timeout will be inherited from job config
+                   )
+               }
+           }
+       }
+   }
+   ```
+
 ## Troubleshooting
 
 ### Common Issues
 
 1. **Codex CLI not found**
    - Ensure the CLI is installed and in PATH
-   - Check the "Codex CLI Path" configuration
+   - Check the "Codex CLI Path" configuration (global or job-level)
+   - Use the job-level "Test Codex CLI" button to verify node accessibility
 
 2. **Timeout errors**
    - Increase the timeout value for complex analyses
    - Check network connectivity to API endpoints
+   - Verify timeout settings in job-level configuration
+
+3. **Job-level configuration not working**
+   - Ensure "Use Job-Level Configuration" is enabled in job settings
+   - Check that job-level values are not empty (empty values fall back to global)
+   - Verify the job-level test passes before running the job
+
+4. **Node-specific issues**
+   - Test CLI accessibility on the specific node where the job runs
+   - Ensure Codex CLI is installed on all nodes, not just the master
+   - Check node-specific PATH and environment variables
 
 ### Debug Information
 
 - Check build logs for detailed error messages
-- Use the "Test Codex CLI" button in global configuration
+- Use the "Test Codex CLI" button in job-level configuration to test node-specific CLI accessibility
 - Review analysis content and prompts for quality
+- Verify that the Codex CLI is accessible on the specific node where your job runs
 
 ## Development
 
@@ -289,6 +392,13 @@ mvn versions:use-latest-releases
 - **Issues**: Create an issue in the repository
 - **Codex CLI**: [https://github.com/openai/codex](https://github.com/openai/codex)
 - **Configuration Guide**: [https://github.com/openai/codex/blob/main/docs/config.md](https://github.com/openai/codex/blob/main/docs/config.md)
+
+### Getting Help
+
+1. **Configuration Issues**: Use the job-level "Test Codex CLI" button to diagnose node-specific problems
+2. **Global vs Job-Level**: Remember that job-level settings override global settings when enabled
+3. **Node Binding**: Always test CLI accessibility at the job level to ensure proper node binding
+4. **Fallback Behavior**: Empty job-level settings will use global defaults
 
 ## License
 
