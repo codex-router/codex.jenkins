@@ -42,6 +42,11 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
     private long modelCacheTimestamp = 0;
     private static final long MODEL_CACHE_DURATION = 300000; // 5 minutes in milliseconds
 
+    // Cached MCP servers list from Codex CLI
+    private List<String> cachedMcpServers = new ArrayList<>();
+    private long mcpServersCacheTimestamp = 0;
+    private static final long MCP_SERVERS_CACHE_DURATION = 300000; // 5 minutes in milliseconds
+
     @DataBoundConstructor
     public CodexAnalysisPlugin() {
         load();
@@ -146,9 +151,88 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
     }
 
     /**
-     * Get available MCP server names from the configuration file
+     * Fetch available MCP servers from Codex CLI
      */
-    public List<String> getAvailableMcpServers() {
+    public FormValidation doFetchAvailableMcpServers(@QueryParameter String codexCliPath, @QueryParameter String configPath) {
+        try {
+            String effectiveCliPath = codexCliPath != null && !codexCliPath.trim().isEmpty()
+                ? codexCliPath.trim()
+                : this.codexCliPath;
+
+            String effectiveConfigPath = configPath != null && !configPath.trim().isEmpty()
+                ? configPath.trim()
+                : this.configPath;
+
+            // Expand ~ to home directory
+            effectiveCliPath = effectiveCliPath.replaceFirst("^~", System.getProperty("user.home"));
+            effectiveConfigPath = effectiveConfigPath.replaceFirst("^~", System.getProperty("user.home"));
+
+            // Execute codex CLI to get MCP servers information
+            ProcessBuilder pb = new ProcessBuilder(effectiveCliPath, "mcp", "list", "--config", effectiveConfigPath);
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+
+            // Read output
+            java.io.BufferedReader reader = new java.io.BufferedReader(
+                new java.io.InputStreamReader(process.getInputStream()));
+            StringBuilder output = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append("\n");
+            }
+
+            int exitCode = process.waitFor();
+            if (exitCode == 0) {
+                // Parse the output to extract MCP server names
+                List<String> servers = parseMcpServersList(output.toString());
+                if (!servers.isEmpty()) {
+                    // Update cache
+                    this.cachedMcpServers = servers;
+                    this.mcpServersCacheTimestamp = System.currentTimeMillis();
+                    save(); // Save the updated cache
+                    return FormValidation.ok("Successfully fetched " + servers.size() + " MCP servers from Codex CLI");
+                } else {
+                    return FormValidation.warning("No MCP servers found in Codex CLI output");
+                }
+            } else {
+                return FormValidation.error("Codex CLI returned exit code: " + exitCode + ". Output: " + output.toString());
+            }
+        } catch (Exception e) {
+            return FormValidation.error("Failed to fetch MCP servers from Codex CLI: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Parse MCP servers list from Codex CLI output
+     */
+    private List<String> parseMcpServersList(String output) {
+        List<String> servers = new ArrayList<>();
+        String[] lines = output.split("\n");
+
+        for (String line : lines) {
+            line = line.trim();
+            // Skip empty lines and headers
+            if (line.isEmpty() || line.startsWith("Available MCP servers:") || line.startsWith("Server") || line.startsWith("-")) {
+                continue;
+            }
+            // Extract server name (assuming format like "server-name" or "provider/server-name")
+            if (!line.isEmpty() && !line.contains(" ") && (line.contains("-") || line.contains("/") || line.matches("^[a-zA-Z0-9_]+$"))) {
+                servers.add(line);
+            }
+        }
+
+        // If no servers found, try to parse from config file as fallback
+        if (servers.isEmpty()) {
+            servers.addAll(parseMcpServersFromConfigFile());
+        }
+
+        return servers;
+    }
+
+    /**
+     * Parse MCP servers from configuration file (fallback method)
+     */
+    private List<String> parseMcpServersFromConfigFile() {
         List<String> serverNames = new ArrayList<>();
         try {
             String configPath = this.configPath.replaceFirst("^~", System.getProperty("user.home"));
@@ -186,6 +270,19 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
         }
 
         return serverNames;
+    }
+
+    /**
+     * Get available MCP server names from the configuration file
+     */
+    public List<String> getAvailableMcpServers() {
+        // Check if cache is valid
+        long currentTime = System.currentTimeMillis();
+        if (cachedMcpServers.isEmpty() || (currentTime - mcpServersCacheTimestamp) > MCP_SERVERS_CACHE_DURATION) {
+            // Return servers from config file if cache is empty or expired
+            return parseMcpServersFromConfigFile();
+        }
+        return new ArrayList<>(cachedMcpServers);
     }
 
     /**
@@ -499,6 +596,25 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
             return "Model cache expired (" + minutesSinceUpdate + " minutes old). Click 'Update Model List' to refresh.";
         } else {
             return "Model cache is current (" + minutesSinceUpdate + " minutes old, " + cachedModels.size() + " models cached).";
+        }
+    }
+
+    /**
+     * Get MCP servers cache status information
+     */
+    public String getMcpServersCacheStatus() {
+        if (cachedMcpServers.isEmpty()) {
+            return "No MCP servers cached. Click 'Update MCP Servers List' to fetch from Codex CLI.";
+        }
+
+        long currentTime = System.currentTimeMillis();
+        long timeSinceUpdate = currentTime - mcpServersCacheTimestamp;
+        long minutesSinceUpdate = timeSinceUpdate / 60000;
+
+        if (timeSinceUpdate > MCP_SERVERS_CACHE_DURATION) {
+            return "MCP servers cache expired (" + minutesSinceUpdate + " minutes old). Click 'Update MCP Servers List' to refresh.";
+        } else {
+            return "MCP servers cache is current (" + minutesSinceUpdate + " minutes old, " + cachedMcpServers.size() + " servers cached).";
         }
     }
 }

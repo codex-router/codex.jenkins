@@ -159,4 +159,31 @@ public class CodexAnalysisJobPropertyTest {
         assertTrue("Should contain kimi-k2", containsKimi);
         assertTrue("Should contain gpt-4", containsGpt4);
     }
+
+    @Test
+    public void testMcpServersFetchingDelegation() {
+        // Test that job property delegates MCP servers fetching to global configuration
+        CodexAnalysisJobProperty.DescriptorImpl descriptor = new CodexAnalysisJobProperty.DescriptorImpl();
+
+        // In test environment, Jenkins instance is not available, so this should return an error
+        FormValidation result = descriptor.doFetchAvailableMcpServers("test-codex-path", "test-config-path");
+
+        // Should return an error since Jenkins instance is not available in test
+        assertNotNull(result);
+        assertTrue("Should return error when Jenkins instance is not available",
+                   result.kind == FormValidation.Kind.ERROR);
+        assertTrue("Error message should mention Jenkins instance not available",
+                   result.getMessage().contains("Jenkins instance not available"));
+    }
+
+    @Test
+    public void testGetMcpServersCacheStatus() {
+        // Test the getMcpServersCacheStatus method without Jenkins dependency
+        CodexAnalysisJobProperty.DescriptorImpl descriptor = new CodexAnalysisJobProperty.DescriptorImpl();
+
+        // This should return a status message when Jenkins is not available
+        String status = descriptor.getMcpServersCacheStatus();
+        assertNotNull(status);
+        assertTrue("Should mention Jenkins instance not available", status.contains("Jenkins instance not available"));
+    }
 }

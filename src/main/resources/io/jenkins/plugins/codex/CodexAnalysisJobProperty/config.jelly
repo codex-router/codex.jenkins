@@ -45,6 +45,11 @@
 
             <f:entry title="MCP Servers" field="selectedMcpServers" description="Select MCP servers from those configured in ~/.codex/config.toml. Leave empty to use global configuration. Only shown when 'Enable MCP Servers' is checked.">
                 <f:select multiple="true" />
+                <f:validateButton title="Update MCP Servers List" progress="Fetching available MCP servers from Codex CLI..."
+                                 method="doFetchAvailableMcpServers" with="codexCliPath,configPath" />
+                <div style="margin-top: 5px; font-size: 11px; color: #666;">
+                    ${instance.mcpServersCacheStatus}
+                </div>
             </f:entry>
 
             <f:entry title="LiteLLM API Key" field="litellmApiKey" description="API key for LiteLLM service. Leave empty to use global configuration.">

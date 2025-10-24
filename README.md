@@ -9,8 +9,12 @@ A Jenkins plugin that provides AI-powered analysis capabilities for pipeline sta
 - **Freestyle Job Support**: Add Codex analysis as a build step in freestyle jobs
 - **Multiple Analysis Types**: Build, test, deployment, security, performance, and quality analysis
 - **Configurable Models**: Support for various AI models (GPT-4, Claude, Gemini, etc.)
+- **Dynamic Model Management**: Update model lists directly from Codex CLI with caching
+- **MCP Servers Support**: Model Context Protocol servers for enhanced analysis capabilities
+- **Dynamic MCP Management**: Update MCP servers list directly from Codex CLI with caching
 - **Job-Level Configuration**: Configure Codex settings per job with node-specific testing
 - **Rich UI**: Detailed analysis results with issue detection and summaries
+- **CLI Management**: Download and update Codex CLI directly from Jenkins (job-level)
 
 ## Prerequisites
 
@@ -50,6 +54,8 @@ Configure the plugin globally in **Manage Jenkins** → **Configure System** →
 - **Timeout**: Default timeout for analysis operations in seconds (default: 120)
 - **Enable MCP Servers**: Enable Model Context Protocol servers for enhanced analysis capabilities
 - **MCP Servers**: Select MCP servers from those configured in ~/.codex/config.toml (only shown when 'Enable MCP Servers' is checked)
+  - Use the "Update MCP Servers List" button to fetch available servers from Codex CLI
+  - MCP servers list is cached for 5 minutes to improve performance
 - **LiteLLM API Key**: API key for LiteLLM service (default: "sk-1234")
 
 ### Job-Level Configuration
@@ -73,6 +79,8 @@ You can also configure Codex settings per job by adding the **Codex Analysis Plu
    - **Timeout**: Override the global timeout for this job
    - **Enable MCP Servers**: Override the global MCP servers setting for this job
    - **MCP Servers**: Override the global MCP servers selection for this job (only shown when 'Enable MCP Servers' is checked)
+     - Use the "Update MCP Servers List" button to fetch available servers from Codex CLI
+     - MCP servers list is cached for 5 minutes to improve performance
    - **LiteLLM API Key**: Override the global LiteLLM API key for this job
 5. Use the **Test Codex CLI** button to verify the CLI is accessible on the node where this job will run
 6. Use the **Update CLI** button to manually download and update the Codex CLI when needed
@@ -105,6 +113,7 @@ The plugin supports Model Context Protocol (MCP) servers for enhanced analysis c
 2. **Server Selection**: Users can select which servers to enable from a dropdown list
 3. **Multi-Selection**: Multiple servers can be selected for combined functionality
 4. **Fallback Support**: If no servers are found, common examples are provided
+5. **Dynamic Updates**: Use the "Update MCP Servers List" button to refresh the server list from Codex CLI
 
 #### MCP Server Types
 
@@ -432,6 +441,19 @@ For jobs that need specific Codex CLI configurations:
    - Test CLI accessibility on the specific node where the job runs
    - Ensure Codex CLI is installed on all nodes, not just the master
    - Check node-specific PATH and environment variables
+
+5. **MCP Servers not available**
+   - Ensure MCP servers are properly configured in `~/.codex/config.toml`
+   - Use the "Update MCP Servers List" button to refresh the server list from Codex CLI
+   - Check that the config file path is correct and accessible
+   - Verify MCP server executables are installed and in PATH
+   - If CLI fails, the plugin will fall back to parsing the config file directly
+
+6. **Model list not updating**
+   - Use the "Update Model List" button to refresh available models from Codex CLI
+   - Check that the Codex CLI is properly configured with API keys
+   - Verify network connectivity to model provider APIs
+   - Model list is cached for 5 minutes - wait for cache expiration or restart Jenkins
 
 ### Debug Information
 

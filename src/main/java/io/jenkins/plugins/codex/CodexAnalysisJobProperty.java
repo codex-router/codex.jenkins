@@ -397,6 +397,22 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
         }
 
         /**
+         * Fetch available MCP servers from Codex CLI (delegates to global configuration)
+         */
+        public FormValidation doFetchAvailableMcpServers(@QueryParameter String codexCliPath, @QueryParameter String configPath) {
+            try {
+                CodexAnalysisPlugin plugin = CodexAnalysisPlugin.get();
+                if (plugin != null) {
+                    return plugin.doFetchAvailableMcpServers(codexCliPath, configPath);
+                }
+            } catch (IllegalStateException e) {
+                // Jenkins instance not available (e.g., in test environment)
+                return FormValidation.error("Global Codex Analysis Plugin configuration not found - Jenkins instance not available");
+            }
+            return FormValidation.error("Global Codex Analysis Plugin configuration not found");
+        }
+
+        /**
          * Get available models from global configuration
          */
         public String[] getAvailableModels() {
@@ -411,6 +427,22 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
                 // Return default models
             }
             return new String[]{"kimi-k2", "gpt-4", "gpt-4-turbo", "gpt-3.5-turbo", "claude-3-opus", "claude-3-sonnet", "claude-3-haiku", "gemini-pro", "gemini-pro-vision"};
+        }
+
+        /**
+         * Get MCP servers cache status from global configuration
+         */
+        public String getMcpServersCacheStatus() {
+            try {
+                CodexAnalysisPlugin plugin = CodexAnalysisPlugin.get();
+                if (plugin != null) {
+                    return plugin.getMcpServersCacheStatus();
+                }
+            } catch (IllegalStateException e) {
+                // Jenkins instance not available (e.g., in test environment)
+                return "Global configuration not available - Jenkins instance not available";
+            }
+            return "Global configuration not available";
         }
 
         /**
