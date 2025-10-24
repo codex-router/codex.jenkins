@@ -25,7 +25,6 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
     private String codexCliDownloadUsername;
     private String codexCliDownloadPassword;
     private String configPath;
-    private String mcpServersPath;
     private String defaultModel;
     private int timeoutSeconds;
     private boolean enableMcpServers;
@@ -34,7 +33,7 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
     private boolean useJobConfig;
 
     @DataBoundConstructor
-    public CodexAnalysisJobProperty(String codexCliPath, String codexCliDownloadUrl, String codexCliDownloadUsername, String codexCliDownloadPassword, String configPath, String mcpServersPath,
+    public CodexAnalysisJobProperty(String codexCliPath, String codexCliDownloadUrl, String codexCliDownloadUsername, String codexCliDownloadPassword, String configPath,
                                    String defaultModel, int timeoutSeconds, boolean enableMcpServers,
                                    String litellmApiKey, List<String> selectedMcpServers, boolean useJobConfig) {
         this.codexCliPath = codexCliPath;
@@ -42,7 +41,6 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
         this.codexCliDownloadUsername = codexCliDownloadUsername;
         this.codexCliDownloadPassword = codexCliDownloadPassword;
         this.configPath = configPath;
-        this.mcpServersPath = mcpServersPath;
         this.defaultModel = defaultModel;
         this.timeoutSeconds = timeoutSeconds;
         this.enableMcpServers = enableMcpServers;
@@ -108,13 +106,10 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
 
     /**
      * Get the effective MCP servers path (job config or global fallback)
+     * Now uses the same config path as the main configuration
      */
     public String getEffectiveMcpServersPath() {
-        if (useJobConfig && mcpServersPath != null && !mcpServersPath.trim().isEmpty()) {
-            return mcpServersPath;
-        }
-        CodexAnalysisPlugin global = CodexAnalysisPlugin.get();
-        return global != null ? global.getMcpServersPath() : "~/.codex/config.toml";
+        return getEffectiveConfigPath();
     }
 
     /**
@@ -274,13 +269,6 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
         this.configPath = configPath;
     }
 
-    public String getMcpServersPath() {
-        return mcpServersPath;
-    }
-
-    public void setMcpServersPath(String mcpServersPath) {
-        this.mcpServersPath = mcpServersPath;
-    }
 
     public String getDefaultModel() {
         return defaultModel;

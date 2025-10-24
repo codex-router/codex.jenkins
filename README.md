@@ -44,7 +44,6 @@ Configure the plugin globally in **Manage Jenkins** → **Configure System** →
 - **Codex CLI Download Username**: Username for authenticated download URL (optional)
 - **Codex CLI Download Password**: Password for authenticated download URL (optional)
 - **Config Path**: Path to Codex configuration file (default: "~/.codex/config.toml")
-- **MCP Servers Path**: Path to MCP servers configuration file (default: "~/.codex/config.toml")
 - **Default Model**: Default model to use for analysis (default: "kimi-k2")
 - **Timeout**: Default timeout for analysis operations in seconds (default: 120)
 - **Enable MCP Servers**: Enable Model Context Protocol servers for enhanced analysis capabilities
@@ -67,7 +66,6 @@ You can also configure Codex settings per job by adding the **Codex Analysis Plu
    - **Codex CLI Download Password**: Override the global CLI download password for this job
    - **Manual CLI Update**: Use the "Update CLI" button to manually download and update Codex CLI from the download URL (job-level only)
    - **Config Path**: Override the global config path for this job
-   - **MCP Servers Path**: Override the global MCP servers path for this job
    - **Default Model**: Override the global default model for this job
    - **Timeout**: Override the global timeout for this job
    - **Enable MCP Servers**: Override the global MCP servers setting for this job

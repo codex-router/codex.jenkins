@@ -31,7 +31,6 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
     private String codexCliDownloadUsername = "";
     private String codexCliDownloadPassword = "";
     private String configPath = "~/.codex/config.toml";
-    private String mcpServersPath = "~/.codex/config.toml";
     private String defaultModel = "kimi-k2";
     private int timeoutSeconds = 120;
     private boolean enableMcpServers = true;
@@ -100,13 +99,6 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
         this.configPath = configPath;
     }
 
-    public String getMcpServersPath() {
-        return mcpServersPath;
-    }
-
-    public void setMcpServersPath(String mcpServersPath) {
-        this.mcpServersPath = mcpServersPath;
-    }
 
     public String getDefaultModel() {
         return defaultModel;
@@ -154,7 +146,7 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
     public List<String> getAvailableMcpServers() {
         List<String> serverNames = new ArrayList<>();
         try {
-            String configPath = mcpServersPath.replaceFirst("^~", System.getProperty("user.home"));
+            String configPath = this.configPath.replaceFirst("^~", System.getProperty("user.home"));
             java.io.File configFile = new java.io.File(configPath);
 
             if (configFile.exists()) {

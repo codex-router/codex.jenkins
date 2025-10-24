@@ -16,7 +16,7 @@ public class CodexAnalysisJobPropertyTest {
     @Test
     public void testJobPropertyCreation() {
         jobProperty = new CodexAnalysisJobProperty(
-            "job-codex", "https://example.com/codex-download", "testuser", "testpass", "job-config.toml", "job-mcp.toml",
+            "job-codex", "https://example.com/codex-download", "testuser", "testpass", "job-config.toml",
             "job-model", 180, false, "job-litellm-key", new ArrayList<>(), true
         );
 
@@ -25,7 +25,6 @@ public class CodexAnalysisJobPropertyTest {
         assertEquals("testuser", jobProperty.getCodexCliDownloadUsername());
         assertEquals("testpass", jobProperty.getCodexCliDownloadPassword());
         assertEquals("job-config.toml", jobProperty.getConfigPath());
-        assertEquals("job-mcp.toml", jobProperty.getMcpServersPath());
         assertEquals("job-model", jobProperty.getDefaultModel());
         assertEquals(180, jobProperty.getTimeoutSeconds());
         assertFalse(jobProperty.isEnableMcpServers());
@@ -37,14 +36,14 @@ public class CodexAnalysisJobPropertyTest {
     @Test
     public void testEffectiveValuesWithJobConfig() {
         jobProperty = new CodexAnalysisJobProperty(
-            "job-codex", "https://example.com/codex-download", "testuser", "testpass", "job-config.toml", "job-mcp.toml",
+            "job-codex", "https://example.com/codex-download", "testuser", "testpass", "job-config.toml",
             "job-model", 180, false, "job-litellm-key", new ArrayList<>(), true
         );
 
         // When useJobConfig is true, job values should be returned
         assertEquals("job-codex", jobProperty.getEffectiveCodexCliPath());
         assertEquals("job-config.toml", jobProperty.getEffectiveConfigPath());
-        assertEquals("job-mcp.toml", jobProperty.getEffectiveMcpServersPath());
+        assertEquals("job-config.toml", jobProperty.getEffectiveMcpServersPath());
         assertEquals("job-model", jobProperty.getEffectiveDefaultModel());
         assertEquals(180, jobProperty.getEffectiveTimeoutSeconds());
         assertFalse(jobProperty.getEffectiveEnableMcpServers());
@@ -53,7 +52,7 @@ public class CodexAnalysisJobPropertyTest {
     @Test
     public void testEffectiveValuesWithoutJobConfig() {
         jobProperty = new CodexAnalysisJobProperty(
-            "job-codex", "https://example.com/codex-download", "testuser", "testpass", "job-config.toml", "job-mcp.toml",
+            "job-codex", "https://example.com/codex-download", "testuser", "testpass", "job-config.toml",
             "job-model", 180, false, "job-litellm-key", new ArrayList<>(), false
         );
 
@@ -61,7 +60,6 @@ public class CodexAnalysisJobPropertyTest {
         // but the effective methods would use global values in real usage
         assertEquals("job-codex", jobProperty.getCodexCliPath());
         assertEquals("job-config.toml", jobProperty.getConfigPath());
-        assertEquals("job-mcp.toml", jobProperty.getMcpServersPath());
         assertEquals("job-model", jobProperty.getDefaultModel());
         assertEquals(180, jobProperty.getTimeoutSeconds());
         assertFalse(jobProperty.isUseJobConfig());
@@ -70,7 +68,7 @@ public class CodexAnalysisJobPropertyTest {
     @Test
     public void testEffectiveValuesWithEmptyJobConfig() {
         jobProperty = new CodexAnalysisJobProperty(
-            "", "", "", "", "", "", "", 0, false, "", new ArrayList<>(), true
+            "", "", "", "", "", "", 0, false, "", new ArrayList<>(), true
         );
 
         // When job config is enabled but values are empty, the raw values should be empty
@@ -78,7 +76,6 @@ public class CodexAnalysisJobPropertyTest {
         // we can't access Jenkins instance, so we test the raw values
         assertEquals("", jobProperty.getCodexCliPath());
         assertEquals("", jobProperty.getConfigPath());
-        assertEquals("", jobProperty.getMcpServersPath());
         assertEquals("", jobProperty.getDefaultModel());
         assertEquals(0, jobProperty.getTimeoutSeconds());
         assertTrue(jobProperty.isUseJobConfig());
@@ -96,7 +93,7 @@ public class CodexAnalysisJobPropertyTest {
     @Test
     public void testSettersAndGetters() {
         jobProperty = new CodexAnalysisJobProperty(
-            "initial-codex", "https://example.com/initial-download", "initialuser", "initialpass", "initial-config.toml", "initial-mcp.toml",
+            "initial-codex", "https://example.com/initial-download", "initialuser", "initialpass", "initial-config.toml",
             "initial-model", 120, true, "initial-litellm-key", new ArrayList<>(), false
         );
 
@@ -106,7 +103,6 @@ public class CodexAnalysisJobPropertyTest {
         jobProperty.setCodexCliDownloadUsername("newuser");
         jobProperty.setCodexCliDownloadPassword("newpass");
         jobProperty.setConfigPath("new-config.toml");
-        jobProperty.setMcpServersPath("new-mcp.toml");
         jobProperty.setDefaultModel("new-model");
         jobProperty.setTimeoutSeconds(240);
         jobProperty.setEnableMcpServers(false);
@@ -119,7 +115,6 @@ public class CodexAnalysisJobPropertyTest {
         assertEquals("newuser", jobProperty.getCodexCliDownloadUsername());
         assertEquals("newpass", jobProperty.getCodexCliDownloadPassword());
         assertEquals("new-config.toml", jobProperty.getConfigPath());
-        assertEquals("new-mcp.toml", jobProperty.getMcpServersPath());
         assertEquals("new-model", jobProperty.getDefaultModel());
         assertEquals(240, jobProperty.getTimeoutSeconds());
         assertFalse(jobProperty.isEnableMcpServers());

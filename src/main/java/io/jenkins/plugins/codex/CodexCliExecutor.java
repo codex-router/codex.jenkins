@@ -83,7 +83,7 @@ public class CodexCliExecutor {
         // Add MCP servers if enabled
         boolean enableMcp = jobConfig != null ? jobConfig.getEffectiveEnableMcpServers() : globalConfig.isEnableMcpServers();
         if (enableMcp) {
-            String mcpPath = jobConfig != null ? jobConfig.getEffectiveMcpServersPath() : globalConfig.getMcpServersPath();
+            String mcpPath = jobConfig != null ? jobConfig.getEffectiveConfigPath() : globalConfig.getConfigPath();
             args.add("--mcp-config", mcpPath);
         }
 
