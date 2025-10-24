@@ -37,6 +37,11 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
     private String litellmApiKey = "sk-1234";
     private List<String> selectedMcpServers = new ArrayList<>();
 
+    // Cached model list from Codex CLI
+    private List<String> cachedModels = new ArrayList<>();
+    private long modelCacheTimestamp = 0;
+    private static final long MODEL_CACHE_DURATION = 300000; // 5 minutes in milliseconds
+
     @DataBoundConstructor
     public CodexAnalysisPlugin() {
         load();
@@ -330,6 +335,13 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
         if (value == null || value.trim().isEmpty()) {
             return FormValidation.warning("Default model is empty, will use 'kimi-k2'");
         }
+
+        // Check if the selected model is in the available models list
+        List<String> availableModels = getModelOptions();
+        if (!availableModels.contains(value.trim())) {
+            return FormValidation.warning("Selected model '" + value + "' is not in the current model list. Click 'Update Model List' to refresh available models.");
+        }
+
         return FormValidation.ok();
     }
 
@@ -348,9 +360,83 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
 
 
     /**
-     * Get available model options for the select dropdown
+     * Fetch available models from Codex CLI
      */
-    public List<String> getModelOptions() {
+    public FormValidation doFetchAvailableModels(@QueryParameter String codexCliPath) {
+        try {
+            String effectiveCliPath = codexCliPath != null && !codexCliPath.trim().isEmpty()
+                ? codexCliPath.trim()
+                : this.codexCliPath;
+
+            // Expand ~ to home directory
+            effectiveCliPath = effectiveCliPath.replaceFirst("^~", System.getProperty("user.home"));
+
+            // Execute codex CLI to get available models
+            ProcessBuilder pb = new ProcessBuilder(effectiveCliPath, "models", "list");
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+
+            // Read output
+            java.io.BufferedReader reader = new java.io.BufferedReader(
+                new java.io.InputStreamReader(process.getInputStream()));
+            StringBuilder output = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append("\n");
+            }
+
+            int exitCode = process.waitFor();
+            if (exitCode == 0) {
+                // Parse the output to extract model names
+                List<String> models = parseModelList(output.toString());
+                if (!models.isEmpty()) {
+                    // Update cache
+                    this.cachedModels = models;
+                    this.modelCacheTimestamp = System.currentTimeMillis();
+                    save(); // Save the updated cache
+                    return FormValidation.ok("Successfully fetched " + models.size() + " models from Codex CLI");
+                } else {
+                    return FormValidation.warning("No models found in Codex CLI output");
+                }
+            } else {
+                return FormValidation.error("Codex CLI returned exit code: " + exitCode + ". Output: " + output.toString());
+            }
+        } catch (Exception e) {
+            return FormValidation.error("Failed to fetch models from Codex CLI: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Parse model list from Codex CLI output
+     */
+    private List<String> parseModelList(String output) {
+        List<String> models = new ArrayList<>();
+        String[] lines = output.split("\n");
+
+        for (String line : lines) {
+            line = line.trim();
+            // Skip empty lines and headers
+            if (line.isEmpty() || line.startsWith("Available models:") || line.startsWith("Model") || line.startsWith("-")) {
+                continue;
+            }
+            // Extract model name (assuming format like "model-name" or "provider/model-name")
+            if (!line.isEmpty() && !line.contains(" ") && (line.contains("-") || line.contains("/"))) {
+                models.add(line);
+            }
+        }
+
+        // If no models found, return default list
+        if (models.isEmpty()) {
+            models.addAll(getDefaultModelOptions());
+        }
+
+        return models;
+    }
+
+    /**
+     * Get default model options (fallback)
+     */
+    private List<String> getDefaultModelOptions() {
         List<String> models = new ArrayList<>();
         models.add("kimi-k2");
         models.add("gpt-4");
@@ -365,13 +451,54 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
     }
 
     /**
+     * Get available model options for the select dropdown
+     */
+    public List<String> getModelOptions() {
+        // Check if cache is valid
+        long currentTime = System.currentTimeMillis();
+        if (cachedModels.isEmpty() || (currentTime - modelCacheTimestamp) > MODEL_CACHE_DURATION) {
+            // Return default models if cache is empty or expired
+            return getDefaultModelOptions();
+        }
+        return new ArrayList<>(cachedModels);
+    }
+
+    /**
      * Fill default model items for the dropdown
      */
     public ListBoxModel doFillDefaultModelItems() {
         ListBoxModel items = new ListBoxModel();
-        for (String model : getModelOptions()) {
+        List<String> models = getModelOptions();
+
+        // Add current default model first if it's not in the list
+        if (defaultModel != null && !defaultModel.trim().isEmpty() && !models.contains(defaultModel)) {
+            items.add(defaultModel, defaultModel);
+        }
+
+        // Add all available models
+        for (String model : models) {
             items.add(model, model);
         }
+
         return items;
+    }
+
+    /**
+     * Get model cache status information
+     */
+    public String getModelCacheStatus() {
+        if (cachedModels.isEmpty()) {
+            return "No models cached. Click 'Update Model List' to fetch from Codex CLI.";
+        }
+
+        long currentTime = System.currentTimeMillis();
+        long timeSinceUpdate = currentTime - modelCacheTimestamp;
+        long minutesSinceUpdate = timeSinceUpdate / 60000;
+
+        if (timeSinceUpdate > MODEL_CACHE_DURATION) {
+            return "Model cache expired (" + minutesSinceUpdate + " minutes old). Click 'Update Model List' to refresh.";
+        } else {
+            return "Model cache is current (" + minutesSinceUpdate + " minutes old, " + cachedModels.size() + " models cached).";
+        }
     }
 }

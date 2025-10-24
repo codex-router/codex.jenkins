@@ -381,20 +381,36 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
         }
 
         /**
+         * Fetch available models from Codex CLI (delegates to global configuration)
+         */
+        public FormValidation doFetchAvailableModels(@QueryParameter String codexCliPath) {
+            try {
+                CodexAnalysisPlugin plugin = CodexAnalysisPlugin.get();
+                if (plugin != null) {
+                    return plugin.doFetchAvailableModels(codexCliPath);
+                }
+            } catch (IllegalStateException e) {
+                // Jenkins instance not available (e.g., in test environment)
+                return FormValidation.error("Global Codex Analysis Plugin configuration not found - Jenkins instance not available");
+            }
+            return FormValidation.error("Global Codex Analysis Plugin configuration not found");
+        }
+
+        /**
          * Get available models from global configuration
          */
         public String[] getAvailableModels() {
-            CodexAnalysisPlugin plugin = CodexAnalysisPlugin.get();
-            if (plugin != null) {
-                return new String[]{
-                    plugin.getDefaultModel(),
-                    "kimi-k2",
-                    "gpt-4",
-                    "claude-3",
-                    "gemini-pro"
-                };
+            try {
+                CodexAnalysisPlugin plugin = CodexAnalysisPlugin.get();
+                if (plugin != null) {
+                    List<String> models = plugin.getModelOptions();
+                    return models.toArray(new String[0]);
+                }
+            } catch (IllegalStateException e) {
+                // Jenkins instance not available (e.g., in test environment)
+                // Return default models
             }
-            return new String[]{"kimi-k2", "gpt-4", "claude-3", "gemini-pro"};
+            return new String[]{"kimi-k2", "gpt-4", "gpt-4-turbo", "gpt-3.5-turbo", "claude-3-opus", "claude-3-sonnet", "claude-3-haiku", "gemini-pro", "gemini-pro-vision"};
         }
 
         /**

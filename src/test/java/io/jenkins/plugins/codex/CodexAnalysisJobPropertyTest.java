@@ -3,6 +3,7 @@ package io.jenkins.plugins.codex;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import hudson.util.FormValidation;
 
 import java.util.ArrayList;
 
@@ -120,5 +121,42 @@ public class CodexAnalysisJobPropertyTest {
         assertFalse(jobProperty.isEnableMcpServers());
         assertEquals("new-litellm-key", jobProperty.getLitellmApiKey());
         assertTrue(jobProperty.isUseJobConfig());
+    }
+
+    @Test
+    public void testModelFetchingDelegation() {
+        // Test that job property delegates model fetching to global configuration
+        CodexAnalysisJobProperty.DescriptorImpl descriptor = new CodexAnalysisJobProperty.DescriptorImpl();
+
+        // In test environment, Jenkins instance is not available, so this should return an error
+        FormValidation result = descriptor.doFetchAvailableModels("test-codex-path");
+
+        // Should return an error since Jenkins instance is not available in test
+        assertNotNull(result);
+        assertTrue("Should return error when Jenkins instance is not available",
+                   result.kind == FormValidation.Kind.ERROR);
+        assertTrue("Error message should mention Jenkins instance not available",
+                   result.getMessage().contains("Jenkins instance not available"));
+    }
+
+    @Test
+    public void testGetAvailableModels() {
+        // Test the getAvailableModels method without Jenkins dependency
+        CodexAnalysisJobProperty.DescriptorImpl descriptor = new CodexAnalysisJobProperty.DescriptorImpl();
+
+        // This should return default models when Jenkins is not available
+        String[] models = descriptor.getAvailableModels();
+        assertNotNull(models);
+        assertTrue("Should return default models", models.length > 0);
+
+        // Check that it contains expected default models
+        boolean containsKimi = false;
+        boolean containsGpt4 = false;
+        for (String model : models) {
+            if ("kimi-k2".equals(model)) containsKimi = true;
+            if ("gpt-4".equals(model)) containsGpt4 = true;
+        }
+        assertTrue("Should contain kimi-k2", containsKimi);
+        assertTrue("Should contain gpt-4", containsGpt4);
     }
 }

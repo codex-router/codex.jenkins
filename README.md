@@ -45,6 +45,8 @@ Configure the plugin globally in **Manage Jenkins** → **Configure System** →
 - **Codex CLI Download Password**: Password for authenticated download URL (optional)
 - **Config Path**: Path to Codex configuration file (default: "~/.codex/config.toml")
 - **Default Model**: Default model to use for analysis (default: "kimi-k2")
+  - Use the "Update Model List" button to fetch available models from Codex CLI
+  - Model list is cached for 5 minutes to improve performance
 - **Timeout**: Default timeout for analysis operations in seconds (default: 120)
 - **Enable MCP Servers**: Enable Model Context Protocol servers for enhanced analysis capabilities
 - **MCP Servers**: Select MCP servers from those configured in ~/.codex/config.toml (only shown when 'Enable MCP Servers' is checked)
@@ -67,6 +69,7 @@ You can also configure Codex settings per job by adding the **Codex Analysis Plu
    - **Manual CLI Update**: Use the "Update CLI" button to manually download and update Codex CLI from the download URL (job-level only)
    - **Config Path**: Override the global config path for this job
    - **Default Model**: Override the global default model for this job
+     - Use the "Update Model List" button to fetch available models from Codex CLI
    - **Timeout**: Override the global timeout for this job
    - **Enable MCP Servers**: Override the global MCP servers setting for this job
    - **MCP Servers**: Override the global MCP servers selection for this job (only shown when 'Enable MCP Servers' is checked)
@@ -75,6 +78,18 @@ You can also configure Codex settings per job by adding the **Codex Analysis Plu
 6. Use the **Update CLI** button to manually download and update the Codex CLI when needed
 
 **Note**: CLI testing and updating are only available at the job level to ensure proper node binding. This allows you to test and update the Codex CLI configuration in the context of the specific node where your job will execute.
+
+### Model List Management
+
+The plugin provides dynamic model list management by fetching available models directly from the Codex CLI:
+
+- **Update Model List**: Click the "Update Model List" button to fetch the latest available models from your Codex CLI installation
+- **Automatic Caching**: Model lists are cached for 5 minutes to improve performance and reduce CLI calls
+- **Cache Status**: The UI shows the current cache status (fresh, expired, or empty)
+- **Fallback Models**: If CLI is unavailable, the plugin falls back to a predefined list of common models
+- **Validation**: The plugin validates that selected models are available in the current model list
+
+This feature ensures you always have access to the most up-to-date models available in your Codex CLI installation, as referenced in the [Codex CLI documentation](https://github.com/openai/codex/blob/main/docs/config.md).
 
 ### MCP Servers Configuration
 
