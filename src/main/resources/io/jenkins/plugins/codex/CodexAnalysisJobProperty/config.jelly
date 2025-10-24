@@ -12,6 +12,18 @@
                 <f:textbox />
             </f:entry>
 
+            <f:entry title="Codex CLI Download URL" field="codexCliDownloadUrl" description="Download URL for Codex CLI on Ubuntu/CentOS systems. Leave empty to use global configuration.">
+                <f:textbox />
+            </f:entry>
+
+            <f:entry title="Codex CLI Download Username" field="codexCliDownloadUsername" description="Username for authenticated download URL. Leave empty to use global configuration.">
+                <f:textbox />
+            </f:entry>
+
+            <f:entry title="Codex CLI Download Password" field="codexCliDownloadPassword" description="Password for authenticated download URL. Leave empty to use global configuration.">
+                <f:password />
+            </f:entry>
+
             <f:entry title="Config Path" field="configPath" description="Path to Codex configuration file. Leave empty to use global configuration.">
                 <f:textbox />
             </f:entry>
@@ -42,7 +54,7 @@
         <f:entry title="Test Codex CLI" description="Test the Codex CLI configuration on the node where this job will run. This ensures proper node binding and CLI accessibility.">
             <f:validateButton title="Test Codex CLI"
                              method="doTestCodexCli"
-                             with="codexCliPath,configPath,litellmApiKey" />
+                             with="codexCliPath,codexCliDownloadUrl,codexCliDownloadUsername,codexCliDownloadPassword,configPath,litellmApiKey" />
         </f:entry>
     </f:section>
 

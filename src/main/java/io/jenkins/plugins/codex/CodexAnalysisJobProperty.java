@@ -21,6 +21,9 @@ import java.util.List;
 public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
 
     private String codexCliPath;
+    private String codexCliDownloadUrl;
+    private String codexCliDownloadUsername;
+    private String codexCliDownloadPassword;
     private String configPath;
     private String mcpServersPath;
     private String defaultModel;
@@ -31,10 +34,13 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
     private boolean useJobConfig;
 
     @DataBoundConstructor
-    public CodexAnalysisJobProperty(String codexCliPath, String configPath, String mcpServersPath,
+    public CodexAnalysisJobProperty(String codexCliPath, String codexCliDownloadUrl, String codexCliDownloadUsername, String codexCliDownloadPassword, String configPath, String mcpServersPath,
                                    String defaultModel, int timeoutSeconds, boolean enableMcpServers,
                                    String litellmApiKey, List<CodexAnalysisPlugin.McpServerConfig> mcpServers, boolean useJobConfig) {
         this.codexCliPath = codexCliPath;
+        this.codexCliDownloadUrl = codexCliDownloadUrl;
+        this.codexCliDownloadUsername = codexCliDownloadUsername;
+        this.codexCliDownloadPassword = codexCliDownloadPassword;
         this.configPath = configPath;
         this.mcpServersPath = mcpServersPath;
         this.defaultModel = defaultModel;
@@ -54,6 +60,39 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
         }
         CodexAnalysisPlugin global = CodexAnalysisPlugin.get();
         return global != null ? global.getCodexCliPath() : "~/.local/bin/codex";
+    }
+
+    /**
+     * Get the effective Codex CLI download URL (job config or global fallback)
+     */
+    public String getEffectiveCodexCliDownloadUrl() {
+        if (useJobConfig && codexCliDownloadUrl != null && !codexCliDownloadUrl.trim().isEmpty()) {
+            return codexCliDownloadUrl;
+        }
+        CodexAnalysisPlugin global = CodexAnalysisPlugin.get();
+        return global != null ? global.getCodexCliDownloadUrl() : "";
+    }
+
+    /**
+     * Get the effective Codex CLI download username (job config or global fallback)
+     */
+    public String getEffectiveCodexCliDownloadUsername() {
+        if (useJobConfig && codexCliDownloadUsername != null && !codexCliDownloadUsername.trim().isEmpty()) {
+            return codexCliDownloadUsername;
+        }
+        CodexAnalysisPlugin global = CodexAnalysisPlugin.get();
+        return global != null ? global.getCodexCliDownloadUsername() : "";
+    }
+
+    /**
+     * Get the effective Codex CLI download password (job config or global fallback)
+     */
+    public String getEffectiveCodexCliDownloadPassword() {
+        if (useJobConfig && codexCliDownloadPassword != null && !codexCliDownloadPassword.trim().isEmpty()) {
+            return codexCliDownloadPassword;
+        }
+        CodexAnalysisPlugin global = CodexAnalysisPlugin.get();
+        return global != null ? global.getCodexCliDownloadPassword() : "";
     }
 
     /**
@@ -140,6 +179,30 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
 
     public void setCodexCliPath(String codexCliPath) {
         this.codexCliPath = codexCliPath;
+    }
+
+    public String getCodexCliDownloadUrl() {
+        return codexCliDownloadUrl;
+    }
+
+    public void setCodexCliDownloadUrl(String codexCliDownloadUrl) {
+        this.codexCliDownloadUrl = codexCliDownloadUrl;
+    }
+
+    public String getCodexCliDownloadUsername() {
+        return codexCliDownloadUsername;
+    }
+
+    public void setCodexCliDownloadUsername(String codexCliDownloadUsername) {
+        this.codexCliDownloadUsername = codexCliDownloadUsername;
+    }
+
+    public String getCodexCliDownloadPassword() {
+        return codexCliDownloadPassword;
+    }
+
+    public void setCodexCliDownloadPassword(String codexCliDownloadPassword) {
+        this.codexCliDownloadPassword = codexCliDownloadPassword;
     }
 
     public String getConfigPath() {
@@ -290,6 +353,9 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
          * This method tests the CLI in the context of the specific job/node
          */
         public FormValidation doTestCodexCli(@QueryParameter("codexCliPath") String codexCliPath,
+                                           @QueryParameter("codexCliDownloadUrl") String codexCliDownloadUrl,
+                                           @QueryParameter("codexCliDownloadUsername") String codexCliDownloadUsername,
+                                           @QueryParameter("codexCliDownloadPassword") String codexCliDownloadPassword,
                                            @QueryParameter("configPath") String configPath,
                                            @QueryParameter("litellmApiKey") String litellmApiKey) {
             try {
@@ -298,12 +364,24 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
 
                 // Use effective values from job configuration
                 String effectiveCliPath = jobProperty != null ? jobProperty.getEffectiveCodexCliPath() : "~/.local/bin/codex";
+                String effectiveCliDownloadUrl = jobProperty != null ? jobProperty.getEffectiveCodexCliDownloadUrl() : "";
+                String effectiveCliDownloadUsername = jobProperty != null ? jobProperty.getEffectiveCodexCliDownloadUsername() : "";
+                String effectiveCliDownloadPassword = jobProperty != null ? jobProperty.getEffectiveCodexCliDownloadPassword() : "";
                 String effectiveConfigPath = jobProperty != null ? jobProperty.getEffectiveConfigPath() : "~/.codex/config.toml";
                 String effectiveLitellmApiKey = jobProperty != null ? jobProperty.getEffectiveLitellmApiKey() : "sk-1234";
 
                 // Override with provided parameters if they are not empty
                 if (codexCliPath != null && !codexCliPath.trim().isEmpty()) {
                     effectiveCliPath = codexCliPath;
+                }
+                if (codexCliDownloadUrl != null && !codexCliDownloadUrl.trim().isEmpty()) {
+                    effectiveCliDownloadUrl = codexCliDownloadUrl;
+                }
+                if (codexCliDownloadUsername != null && !codexCliDownloadUsername.trim().isEmpty()) {
+                    effectiveCliDownloadUsername = codexCliDownloadUsername;
+                }
+                if (codexCliDownloadPassword != null && !codexCliDownloadPassword.trim().isEmpty()) {
+                    effectiveCliDownloadPassword = codexCliDownloadPassword;
                 }
                 if (configPath != null && !configPath.trim().isEmpty()) {
                     effectiveConfigPath = configPath;

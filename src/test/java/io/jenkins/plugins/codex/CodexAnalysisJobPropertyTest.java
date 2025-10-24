@@ -16,11 +16,14 @@ public class CodexAnalysisJobPropertyTest {
     @Test
     public void testJobPropertyCreation() {
         jobProperty = new CodexAnalysisJobProperty(
-            "job-codex", "job-config.toml", "job-mcp.toml",
+            "job-codex", "https://example.com/codex-download", "testuser", "testpass", "job-config.toml", "job-mcp.toml",
             "job-model", 180, false, "job-litellm-key", new ArrayList<>(), true
         );
 
         assertEquals("job-codex", jobProperty.getCodexCliPath());
+        assertEquals("https://example.com/codex-download", jobProperty.getCodexCliDownloadUrl());
+        assertEquals("testuser", jobProperty.getCodexCliDownloadUsername());
+        assertEquals("testpass", jobProperty.getCodexCliDownloadPassword());
         assertEquals("job-config.toml", jobProperty.getConfigPath());
         assertEquals("job-mcp.toml", jobProperty.getMcpServersPath());
         assertEquals("job-model", jobProperty.getDefaultModel());
@@ -33,7 +36,7 @@ public class CodexAnalysisJobPropertyTest {
     @Test
     public void testEffectiveValuesWithJobConfig() {
         jobProperty = new CodexAnalysisJobProperty(
-            "job-codex", "job-config.toml", "job-mcp.toml",
+            "job-codex", "https://example.com/codex-download", "testuser", "testpass", "job-config.toml", "job-mcp.toml",
             "job-model", 180, false, "job-litellm-key", new ArrayList<>(), true
         );
 
@@ -49,7 +52,7 @@ public class CodexAnalysisJobPropertyTest {
     @Test
     public void testEffectiveValuesWithoutJobConfig() {
         jobProperty = new CodexAnalysisJobProperty(
-            "job-codex", "job-config.toml", "job-mcp.toml",
+            "job-codex", "https://example.com/codex-download", "testuser", "testpass", "job-config.toml", "job-mcp.toml",
             "job-model", 180, false, "job-litellm-key", new ArrayList<>(), false
         );
 
@@ -66,7 +69,7 @@ public class CodexAnalysisJobPropertyTest {
     @Test
     public void testEffectiveValuesWithEmptyJobConfig() {
         jobProperty = new CodexAnalysisJobProperty(
-            "", "", "", "", 0, false, "", new ArrayList<>(), true
+            "", "", "", "", "", "", "", 0, false, "", new ArrayList<>(), true
         );
 
         // When job config is enabled but values are empty, the raw values should be empty
@@ -92,12 +95,15 @@ public class CodexAnalysisJobPropertyTest {
     @Test
     public void testSettersAndGetters() {
         jobProperty = new CodexAnalysisJobProperty(
-            "initial-codex", "initial-config.toml", "initial-mcp.toml",
+            "initial-codex", "https://example.com/initial-download", "initialuser", "initialpass", "initial-config.toml", "initial-mcp.toml",
             "initial-model", 120, true, "initial-litellm-key", new ArrayList<>(), false
         );
 
         // Test setters
         jobProperty.setCodexCliPath("new-codex");
+        jobProperty.setCodexCliDownloadUrl("https://example.com/new-download");
+        jobProperty.setCodexCliDownloadUsername("newuser");
+        jobProperty.setCodexCliDownloadPassword("newpass");
         jobProperty.setConfigPath("new-config.toml");
         jobProperty.setMcpServersPath("new-mcp.toml");
         jobProperty.setDefaultModel("new-model");
@@ -108,6 +114,9 @@ public class CodexAnalysisJobPropertyTest {
 
         // Test getters
         assertEquals("new-codex", jobProperty.getCodexCliPath());
+        assertEquals("https://example.com/new-download", jobProperty.getCodexCliDownloadUrl());
+        assertEquals("newuser", jobProperty.getCodexCliDownloadUsername());
+        assertEquals("newpass", jobProperty.getCodexCliDownloadPassword());
         assertEquals("new-config.toml", jobProperty.getConfigPath());
         assertEquals("new-mcp.toml", jobProperty.getMcpServersPath());
         assertEquals("new-model", jobProperty.getDefaultModel());

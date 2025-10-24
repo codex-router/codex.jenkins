@@ -39,6 +39,9 @@ Configure the plugin globally in **Manage Jenkins** → **Configure System** →
 ![System Configuration](system-config.png)
 
 - **Codex CLI Path**: Path to the Codex CLI executable (default: "~/.local/bin/codex")
+- **Codex CLI Download URL**: Download URL for Codex CLI on Ubuntu/CentOS systems (required)
+- **Codex CLI Download Username**: Username for authenticated download URL (optional)
+- **Codex CLI Download Password**: Password for authenticated download URL (optional)
 - **Config Path**: Path to Codex configuration file (default: "~/.codex/config.toml")
 - **MCP Servers Path**: Path to MCP servers configuration file (default: "~/.codex/config.toml")
 - **Default Model**: Default model to use for analysis (default: "kimi-k2")
@@ -57,6 +60,9 @@ You can also configure Codex settings per job by adding the **Codex Analysis Plu
 3. Enable **Use Job-Level Configuration** to override global settings
 4. Configure job-specific settings:
    - **Codex CLI Path**: Override the global CLI path for this job
+   - **Codex CLI Download URL**: Override the global CLI download URL for this job
+   - **Codex CLI Download Username**: Override the global CLI download username for this job
+   - **Codex CLI Download Password**: Override the global CLI download password for this job
    - **Config Path**: Override the global config path for this job
    - **MCP Servers Path**: Override the global MCP servers path for this job
    - **Default Model**: Override the global default model for this job

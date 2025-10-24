@@ -27,6 +27,9 @@ import java.util.List;
 public class CodexAnalysisPlugin extends GlobalConfiguration {
 
     private String codexCliPath = "~/.local/bin/codex";
+    private String codexCliDownloadUrl = "";
+    private String codexCliDownloadUsername = "";
+    private String codexCliDownloadPassword = "";
     private String configPath = "~/.codex/config.toml";
     private String mcpServersPath = "~/.codex/config.toml";
     private String defaultModel = "kimi-k2";
@@ -63,6 +66,30 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
 
     public void setCodexCliPath(String codexCliPath) {
         this.codexCliPath = codexCliPath;
+    }
+
+    public String getCodexCliDownloadUrl() {
+        return codexCliDownloadUrl;
+    }
+
+    public void setCodexCliDownloadUrl(String codexCliDownloadUrl) {
+        this.codexCliDownloadUrl = codexCliDownloadUrl;
+    }
+
+    public String getCodexCliDownloadUsername() {
+        return codexCliDownloadUsername;
+    }
+
+    public void setCodexCliDownloadUsername(String codexCliDownloadUsername) {
+        this.codexCliDownloadUsername = codexCliDownloadUsername;
+    }
+
+    public String getCodexCliDownloadPassword() {
+        return codexCliDownloadPassword;
+    }
+
+    public void setCodexCliDownloadPassword(String codexCliDownloadPassword) {
+        this.codexCliDownloadPassword = codexCliDownloadPassword;
     }
 
     public String getConfigPath() {
@@ -190,6 +217,45 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
     public FormValidation doCheckCodexCliPath(@QueryParameter String value) {
         if (value == null || value.trim().isEmpty()) {
             return FormValidation.warning("Codex CLI path is empty, will use 'codex'");
+        }
+        return FormValidation.ok();
+    }
+
+    /**
+     * Validate Codex CLI download URL
+     */
+    public FormValidation doCheckCodexCliDownloadUrl(@QueryParameter String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return FormValidation.error("Codex CLI download URL is required for Ubuntu/CentOS systems");
+        }
+        // Basic URL validation
+        String trimmedValue = value.trim();
+        if (!trimmedValue.startsWith("http://") && !trimmedValue.startsWith("https://")) {
+            return FormValidation.warning("Download URL should start with http:// or https://");
+        }
+        return FormValidation.ok();
+    }
+
+    /**
+     * Validate Codex CLI download username
+     */
+    public FormValidation doCheckCodexCliDownloadUsername(@QueryParameter String value) {
+        if (value != null && !value.trim().isEmpty()) {
+            if (value.trim().length() < 2) {
+                return FormValidation.warning("Username seems too short");
+            }
+        }
+        return FormValidation.ok();
+    }
+
+    /**
+     * Validate Codex CLI download password
+     */
+    public FormValidation doCheckCodexCliDownloadPassword(@QueryParameter String value) {
+        if (value != null && !value.trim().isEmpty()) {
+            if (value.trim().length() < 4) {
+                return FormValidation.warning("Password seems too short");
+            }
         }
         return FormValidation.ok();
     }

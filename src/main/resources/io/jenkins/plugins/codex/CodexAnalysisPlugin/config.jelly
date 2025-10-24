@@ -7,6 +7,18 @@
             <f:textbox default="~/.local/bin/codex" />
         </f:entry>
 
+        <f:entry title="Codex CLI Download URL" field="codexCliDownloadUrl" description="Download URL for Codex CLI on Ubuntu/CentOS systems. Required configuration.">
+            <f:textbox />
+        </f:entry>
+
+        <f:entry title="Codex CLI Download Username" field="codexCliDownloadUsername" description="Username for authenticated download URL. Optional configuration.">
+            <f:textbox />
+        </f:entry>
+
+        <f:entry title="Codex CLI Download Password" field="codexCliDownloadPassword" description="Password for authenticated download URL. Optional configuration.">
+            <f:password />
+        </f:entry>
+
         <f:entry title="Config Path" field="configPath" description="Path to Codex configuration file. Default: '~/.codex/config.toml'">
             <f:textbox default="~/.codex/config.toml" />
         </f:entry>
