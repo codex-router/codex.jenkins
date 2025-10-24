@@ -40,7 +40,7 @@
             </f:entry>
 
             <f:entry title="Enable MCP Servers" field="enableMcpServers" description="Enable Model Context Protocol servers for enhanced analysis capabilities">
-                <f:checkbox default="true" />
+                <f:checkbox default="false" />
             </f:entry>
 
             <f:entry title="MCP Servers" field="selectedMcpServers" description="Select MCP servers from those configured in ~/.codex/config.toml. Leave empty to use global configuration. Only shown when 'Enable MCP Servers' is checked.">
@@ -52,7 +52,7 @@
                 </div>
             </f:entry>
 
-            <f:entry title="LiteLLM API Key" field="litellmApiKey" description="API key for LiteLLM service. Leave empty to use global configuration.">
+            <f:entry title="LiteLLM API Key" field="litellmApiKey" description="API key for LiteLLM service. Leave empty to use global configuration or if not using LiteLLM.">
                 <f:textbox />
             </f:entry>
         </f:advanced>

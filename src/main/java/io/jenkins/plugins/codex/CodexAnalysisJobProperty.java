@@ -142,7 +142,7 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
             return enableMcpServers;
         }
         CodexAnalysisPlugin global = CodexAnalysisPlugin.get();
-        return global != null ? global.isEnableMcpServers() : true;
+        return global != null ? global.isEnableMcpServers() : false;
     }
 
     /**
@@ -153,7 +153,7 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
             return litellmApiKey;
         }
         CodexAnalysisPlugin global = CodexAnalysisPlugin.get();
-        return global != null ? global.getLitellmApiKey() : "sk-1234";
+        return global != null ? global.getLitellmApiKey() : "";
     }
 
     /**

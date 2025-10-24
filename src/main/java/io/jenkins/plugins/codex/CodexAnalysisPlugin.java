@@ -33,8 +33,8 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
     private String configPath = "~/.codex/config.toml";
     private String defaultModel = "kimi-k2";
     private int timeoutSeconds = 120;
-    private boolean enableMcpServers = true;
-    private String litellmApiKey = "sk-1234";
+    private boolean enableMcpServers = false;
+    private String litellmApiKey = "";
     private List<String> selectedMcpServers = new ArrayList<>();
 
     // Cached model list from Codex CLI
