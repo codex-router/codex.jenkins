@@ -3,8 +3,8 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
 
     <f:section title="Codex Analysis Plugin Configuration">
-        <f:entry title="Codex CLI Path" field="codexCliPath" description="Path to the Codex CLI executable. Default: 'codex'">
-            <f:textbox default="codex" />
+        <f:entry title="Codex CLI Path" field="codexCliPath" description="Path to the Codex CLI executable. Default: '~/.local/bin/codex'">
+            <f:textbox default="~/.local/bin/codex" />
         </f:entry>
 
         <f:entry title="Config Path" field="configPath" description="Path to Codex configuration file. Default: '~/.codex/config.toml'">

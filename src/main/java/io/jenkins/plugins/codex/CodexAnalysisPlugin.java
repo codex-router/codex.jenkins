@@ -26,7 +26,7 @@ import java.util.List;
 @Symbol("codexAnalysis")
 public class CodexAnalysisPlugin extends GlobalConfiguration {
 
-    private String codexCliPath = "codex";
+    private String codexCliPath = "~/.local/bin/codex";
     private String configPath = "~/.codex/config.toml";
     private String mcpServersPath = "~/.codex/config.toml";
     private String defaultModel = "kimi-k2";

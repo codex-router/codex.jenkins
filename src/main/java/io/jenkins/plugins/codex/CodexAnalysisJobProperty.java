@@ -51,7 +51,7 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
             return codexCliPath;
         }
         CodexAnalysisPlugin global = CodexAnalysisPlugin.get();
-        return global != null ? global.getCodexCliPath() : "codex";
+        return global != null ? global.getCodexCliPath() : "~/.local/bin/codex";
     }
 
     /**
@@ -275,7 +275,7 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
                 CodexAnalysisJobProperty jobProperty = getCurrentJobProperty();
 
                 // Use effective values from job configuration
-                String effectiveCliPath = jobProperty != null ? jobProperty.getEffectiveCodexCliPath() : "codex";
+                String effectiveCliPath = jobProperty != null ? jobProperty.getEffectiveCodexCliPath() : "~/.local/bin/codex";
                 String effectiveConfigPath = jobProperty != null ? jobProperty.getEffectiveConfigPath() : "~/.codex/config.toml";
 
                 // Override with provided parameters if they are not empty

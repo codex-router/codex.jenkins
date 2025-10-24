@@ -38,7 +38,7 @@ Configure the plugin globally in **Manage Jenkins** → **Configure System** →
 
 ![System Configuration](system-config.png)
 
-- **Codex CLI Path**: Path to the Codex CLI executable (default: "codex")
+- **Codex CLI Path**: Path to the Codex CLI executable (default: "~/.local/bin/codex")
 - **Config Path**: Path to Codex configuration file (default: "~/.codex/config.toml")
 - **MCP Servers Path**: Path to MCP servers configuration file (default: "~/.codex/config.toml")
 - **Default Model**: Default model to use for analysis (default: "kimi-k2")
