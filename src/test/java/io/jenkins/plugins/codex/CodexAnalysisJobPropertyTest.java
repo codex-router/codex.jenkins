@@ -141,23 +141,13 @@ public class CodexAnalysisJobPropertyTest {
 
     @Test
     public void testGetAvailableModels() {
-        // Test the getAvailableModels method without Jenkins dependency
+        // Test the getAvailableModels method (CLI-only, no hardcoded models)
         CodexAnalysisJobProperty.DescriptorImpl descriptor = new CodexAnalysisJobProperty.DescriptorImpl();
 
-        // This should return default models when Jenkins is not available
+        // This should return empty array when CLI is not available (test environment)
         String[] models = descriptor.getAvailableModels();
         assertNotNull(models);
-        assertTrue("Should return default models", models.length > 0);
-
-        // Check that it contains expected default models
-        boolean containsKimi = false;
-        boolean containsGpt4 = false;
-        for (String model : models) {
-            if ("kimi-k2".equals(model)) containsKimi = true;
-            if ("gpt-4".equals(model)) containsGpt4 = true;
-        }
-        assertTrue("Should contain kimi-k2", containsKimi);
-        assertTrue("Should contain gpt-4", containsGpt4);
+        assertTrue("Should return empty array when CLI is not available", models.length == 0);
     }
 
     @Test

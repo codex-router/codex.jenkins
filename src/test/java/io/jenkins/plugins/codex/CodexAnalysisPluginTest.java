@@ -13,15 +13,10 @@ public class CodexAnalysisPluginTest {
 
     @Test
     public void testDefaultModelOptions() {
-        // Test the static method that doesn't require Jenkins instance
+        // Test that no hardcoded models are provided (CLI-only approach)
         List<String> defaultModels = getDefaultModelOptions();
         assertNotNull(defaultModels);
-        assertFalse(defaultModels.isEmpty());
-
-        // Check that default models include common ones
-        assertTrue("Should contain kimi-k2", defaultModels.contains("kimi-k2"));
-        assertTrue("Should contain gpt-4", defaultModels.contains("gpt-4"));
-        assertTrue("Should contain claude-3-opus", defaultModels.contains("claude-3-opus"));
+        assertTrue("Should return empty list (no hardcoded models)", defaultModels.isEmpty());
     }
 
     @Test
@@ -34,18 +29,19 @@ public class CodexAnalysisPluginTest {
 
     @Test
     public void testModelValidation() {
-        // Test validation logic without Jenkins instance
-        List<String> availableModels = getDefaultModelOptions();
+        // Test validation logic without Jenkins instance (CLI-only approach)
+        List<String> availableModels = getDefaultModelOptions(); // Returns empty list
 
         // Test with empty model
         hudson.util.FormValidation result = validateDefaultModel("", availableModels);
         assertNotNull(result);
         assertTrue("Should show warning for empty model", result.kind == hudson.util.FormValidation.Kind.WARNING);
 
-        // Test with valid model
+        // Test with any model when no models are available from CLI
         result = validateDefaultModel("kimi-k2", availableModels);
         assertNotNull(result);
-        assertTrue("Should be OK for valid model", result.kind == hudson.util.FormValidation.Kind.OK);
+        assertTrue("Should show warning when no models available from CLI", result.kind == hudson.util.FormValidation.Kind.WARNING);
+        assertTrue("Should mention model list refresh", result.getMessage().contains("Update Model List"));
     }
 
     @Test
@@ -98,17 +94,8 @@ public class CodexAnalysisPluginTest {
 
     // Helper methods that replicate the logic without Jenkins dependencies
     private List<String> getDefaultModelOptions() {
-        List<String> models = new java.util.ArrayList<>();
-        models.add("kimi-k2");
-        models.add("gpt-4");
-        models.add("gpt-4-turbo");
-        models.add("gpt-3.5-turbo");
-        models.add("claude-3-opus");
-        models.add("claude-3-sonnet");
-        models.add("claude-3-haiku");
-        models.add("gemini-pro");
-        models.add("gemini-pro-vision");
-        return models;
+        // Return empty list - no hardcoded models anymore
+        return new java.util.ArrayList<>();
     }
 
     private String getModelCacheStatusForTest() {
@@ -188,10 +175,8 @@ public class CodexAnalysisPluginTest {
             }
         }
 
-        // If no models found, return default list
-        if (models.isEmpty()) {
-            models.addAll(getDefaultModelOptions());
-        }
+        // If no models found, return empty list (no hardcoded fallback)
+        // models list remains empty
 
         return models;
     }

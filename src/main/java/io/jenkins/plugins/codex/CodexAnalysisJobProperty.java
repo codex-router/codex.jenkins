@@ -119,8 +119,8 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
         if (useJobConfig && defaultModel != null && !defaultModel.trim().isEmpty()) {
             return defaultModel;
         }
-        // No global fallback - return default value
-        return "kimi-k2";
+        // No global fallback - return empty string to indicate no default
+        return "";
     }
 
     /**
@@ -515,20 +515,63 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
         }
 
         /**
-         * Get available models from global configuration
+         * Get available models from Codex CLI (job-level only)
          */
         public String[] getAvailableModels() {
             try {
-                CodexAnalysisPlugin plugin = CodexAnalysisPlugin.get();
-                if (plugin != null) {
-                    List<String> models = plugin.getModelOptions();
-                    return models.toArray(new String[0]);
+                // Try to fetch models from Codex CLI directly
+                String effectiveCliPath = "~/.local/bin/codex".replaceFirst("^~", System.getProperty("user.home"));
+
+                // Execute codex CLI to get available models
+                ProcessBuilder pb = new ProcessBuilder(effectiveCliPath, "models", "list");
+                pb.redirectErrorStream(true);
+                Process process = pb.start();
+
+                // Read output
+                java.io.BufferedReader reader = new java.io.BufferedReader(
+                    new java.io.InputStreamReader(process.getInputStream()));
+                StringBuilder output = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    output.append(line).append("\n");
                 }
-            } catch (IllegalStateException e) {
-                // Jenkins instance not available (e.g., in test environment)
-                // Return default models
+
+                int exitCode = process.waitFor();
+                if (exitCode == 0) {
+                    // Parse the output to extract model names
+                    List<String> models = parseModelList(output.toString());
+                    if (!models.isEmpty()) {
+                        return models.toArray(new String[0]);
+                    }
+                }
+            } catch (Exception e) {
+                // If CLI execution fails, return empty array
             }
-            return new String[]{"kimi-k2", "gpt-4", "gpt-4-turbo", "gpt-3.5-turbo", "claude-3-opus", "claude-3-sonnet", "claude-3-haiku", "gemini-pro", "gemini-pro-vision"};
+
+            // Return empty array if CLI execution fails
+            return new String[0];
+        }
+
+        /**
+         * Parse model list from Codex CLI output
+         */
+        private List<String> parseModelList(String output) {
+            List<String> models = new ArrayList<>();
+            String[] lines = output.split("\n");
+
+            for (String line : lines) {
+                line = line.trim();
+                // Skip empty lines and headers
+                if (line.isEmpty() || line.startsWith("Available models:") || line.startsWith("Model") || line.startsWith("-")) {
+                    continue;
+                }
+                // Extract model name (assuming format like "model-name" or "provider/model-name")
+                if (!line.isEmpty() && !line.contains(" ") && (line.contains("-") || line.contains("/") || line.matches("^[a-zA-Z0-9_]+$"))) {
+                    models.add(line);
+                }
+            }
+
+            return models;
         }
 
         /**

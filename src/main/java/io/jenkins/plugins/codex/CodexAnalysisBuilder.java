@@ -264,21 +264,11 @@ public class CodexAnalysisBuilder extends Builder {
         }
 
         /**
-         * Get available models from configuration
+         * Get available models from Codex CLI (no hardcoded models)
          */
         public String[] getAvailableModels() {
-            // Default model options (no global default model anymore)
-            return new String[]{
-                "kimi-k2",
-                "gpt-4",
-                "gpt-4-turbo",
-                "gpt-3.5-turbo",
-                "claude-3-opus",
-                "claude-3-sonnet",
-                "claude-3-haiku",
-                "gemini-pro",
-                "gemini-pro-vision"
-            };
+            // Return empty array - models should be fetched from Codex CLI dynamically
+            return new String[0];
         }
     }
 }

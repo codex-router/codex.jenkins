@@ -69,7 +69,18 @@ public class CodexCliExecutor {
         // Add model - use additional params first, then job config, then global
         String model = additionalParams != null ? additionalParams.get("model") : null;
         if (StringUtils.isBlank(model)) {
-            model = jobConfig != null ? jobConfig.getEffectiveDefaultModel() : "kimi-k2";
+            model = jobConfig != null ? jobConfig.getEffectiveDefaultModel() : "";
+        }
+        // If still blank, we need to fetch from CLI or use first available model
+        if (StringUtils.isBlank(model)) {
+            // Try to get first available model from CLI
+            String[] availableModels = jobConfig != null ?
+                ((CodexAnalysisJobProperty.DescriptorImpl) jobConfig.getDescriptor()).getAvailableModels() : new String[0];
+            if (availableModels.length > 0) {
+                model = availableModels[0];
+            } else {
+                throw new RuntimeException("No model specified and no models available from Codex CLI. Please configure a default model or ensure Codex CLI is properly installed.");
+            }
         }
         args.add("--model", model);
 
@@ -148,8 +159,18 @@ public class CodexCliExecutor {
             args.add("--context", context);
         }
 
-        // Use job-level model and timeout if available, otherwise use default
-        String model = jobConfig != null ? jobConfig.getEffectiveDefaultModel() : "kimi-k2";
+        // Use job-level model and timeout if available, otherwise use first available model
+        String model = jobConfig != null ? jobConfig.getEffectiveDefaultModel() : "";
+        if (StringUtils.isBlank(model)) {
+            // Try to get first available model from CLI
+            String[] availableModels = jobConfig != null ?
+                ((CodexAnalysisJobProperty.DescriptorImpl) jobConfig.getDescriptor()).getAvailableModels() : new String[0];
+            if (availableModels.length > 0) {
+                model = availableModels[0];
+            } else {
+                throw new RuntimeException("No model specified and no models available from Codex CLI. Please configure a default model or ensure Codex CLI is properly installed.");
+            }
+        }
         int timeout = jobConfig != null ? jobConfig.getEffectiveTimeoutSeconds() : globalConfig.getTimeoutSeconds();
         args.add("--model", model);
         args.add("--timeout", String.valueOf(timeout));

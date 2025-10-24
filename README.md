@@ -8,8 +8,8 @@ A Jenkins plugin that provides AI-powered analysis capabilities for pipeline sta
 - **Stage-level Analysis**: Automatic analysis of pipeline stages with context gathering
 - **Freestyle Job Support**: Add Codex analysis as a build step in freestyle jobs
 - **Multiple Analysis Types**: Build, test, deployment, security, performance, and quality analysis
-- **Configurable Models**: Support for various AI models (GPT-4, Claude, Gemini, etc.)
-- **Dynamic Model Management**: Update model lists directly from Codex CLI with caching
+- **CLI-Only Model Management**: Dynamic model lists fetched directly from Codex CLI (no hardcoded models)
+- **Real-Time Model Updates**: Model lists always reflect current CLI capabilities
 - **MCP Servers Support**: Model Context Protocol servers for enhanced analysis capabilities
 - **Dynamic MCP Management**: Update MCP servers list directly from Codex CLI with caching
 - **Job-Level Configuration**: Configure Codex settings per job with node-specific testing
@@ -24,6 +24,7 @@ Before using this plugin, ensure you have:
    - Follow the installation guide at [codex.sh](https://github.com/codex-router/codex.sh/blob/main/README.md)
    - Ensure the CLI is in your system PATH
    - Configure your API keys and model settings
+   - **Important**: Model lists are fetched dynamically from Codex CLI - no hardcoded models are provided
    - **Note**: The Codex CLI Download URL configuration is optional - you can install the CLI manually or use the plugin's download feature
 
 2. **Network access** to the model provider's API
@@ -69,8 +70,9 @@ You can also configure Codex settings per job by adding the **Codex Analysis Plu
    - **Codex CLI Download Password**: Override the global CLI download password for this job
    - **Manual CLI Update**: Use the "Update CLI" button to manually download and update Codex CLI from the download URL (job-level only)
    - **Config Path**: Override the global config path for this job
-   - **Default Model**: Configure the default model for this job (default: "kimi-k2")
+   - **Default Model**: Configure the default model for this job (no default - must be selected from available models)
      - Use the "Update Model List" button to fetch available models from Codex CLI
+     - Model list is populated dynamically from Codex CLI - no hardcoded models
    - **Timeout**: Override the global timeout for this job
    - **Enable MCP Servers**: Enable Model Context Protocol servers for this job (default: disabled)
    - **MCP Servers**: Select MCP servers for this job (only shown when 'Enable MCP Servers' is checked)
@@ -81,18 +83,6 @@ You can also configure Codex settings per job by adding the **Codex Analysis Plu
 6. Use the **Update CLI** button to manually download and update the Codex CLI when needed
 
 **Note**: CLI testing and updating are only available at the job level to ensure proper node binding. This allows you to test and update the Codex CLI configuration in the context of the specific node where your job will execute.
-
-### Model List Management
-
-The plugin provides dynamic model list management by fetching available models directly from the Codex CLI:
-
-- **Update Model List**: Click the "Update Model List" button to fetch the latest available models from your Codex CLI installation
-- **Automatic Caching**: Model lists are cached for 5 minutes to improve performance and reduce CLI calls
-- **Cache Status**: The UI shows the current cache status (fresh, expired, or empty)
-- **Fallback Models**: If CLI is unavailable, the plugin falls back to a predefined list of common models
-- **Validation**: The plugin validates that selected models are available in the current model list
-
-This feature ensures you always have access to the most up-to-date models available in your Codex CLI installation, as referenced in the [Codex CLI documentation](https://github.com/openai/codex/blob/main/docs/config.md).
 
 ### MCP Servers Configuration
 
@@ -449,6 +439,20 @@ For jobs that need specific Codex CLI configurations:
    - Check that the Codex CLI is properly configured with API keys
    - Verify network connectivity to model provider APIs
    - Model list is cached for 5 minutes - wait for cache expiration or restart Jenkins
+
+7. **No models available in dropdown**
+   - **CLI-Only Approach**: The plugin fetches models exclusively from Codex CLI - no hardcoded models are provided
+   - Ensure Codex CLI is properly installed and accessible
+   - Use the "Update Model List" button to fetch models from CLI
+   - Check that `codex models list` command works in your terminal
+   - Verify API keys are configured in Codex CLI
+   - If no models appear, the CLI may not be properly configured or accessible
+
+8. **Model validation warnings**
+   - Model validation shows warnings when no models are available from CLI
+   - This is expected behavior when CLI is not accessible or not configured
+   - Use the "Update Model List" button to fetch available models
+   - Ensure Codex CLI is properly installed and configured with API keys
 
 ### Debug Information
 
