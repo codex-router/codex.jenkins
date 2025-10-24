@@ -48,15 +48,10 @@ Configure the plugin globally in **Manage Jenkins** → **Configure System** →
 - **Codex CLI Download Username**: Username for authenticated download URL (optional)
 - **Codex CLI Download Password**: Password for authenticated download URL (optional)
 - **Config Path**: Path to Codex configuration file (default: "~/.codex/config.toml")
-- **Default Model**: Default model to use for analysis (default: "kimi-k2")
-  - Use the "Update Model List" button to fetch available models from Codex CLI
-  - Model list is cached for 5 minutes to improve performance
 - **Timeout**: Default timeout for analysis operations in seconds (default: 120)
-- **Enable MCP Servers**: Enable Model Context Protocol servers for enhanced analysis capabilities (default: disabled)
-- **MCP Servers**: Select MCP servers from those configured in ~/.codex/config.toml (only shown when 'Enable MCP Servers' is checked)
-  - Use the "Update MCP Servers List" button to fetch available servers from Codex CLI
-  - MCP servers list is cached for 5 minutes to improve performance
 - **LiteLLM API Key**: API key for LiteLLM service (default: empty)
+
+**Note**: Default Model and MCP Servers configuration are only available at the job level for more granular control.
 
 ### Job-Level Configuration
 
@@ -74,13 +69,13 @@ You can also configure Codex settings per job by adding the **Codex Analysis Plu
    - **Codex CLI Download Password**: Override the global CLI download password for this job
    - **Manual CLI Update**: Use the "Update CLI" button to manually download and update Codex CLI from the download URL (job-level only)
    - **Config Path**: Override the global config path for this job
-   - **Default Model**: Override the global default model for this job
+   - **Default Model**: Configure the default model for this job (default: "kimi-k2")
      - Use the "Update Model List" button to fetch available models from Codex CLI
    - **Timeout**: Override the global timeout for this job
-   - **Enable MCP Servers**: Override the global MCP servers setting for this job
-   - **MCP Servers**: Override the global MCP servers selection for this job (only shown when 'Enable MCP Servers' is checked)
+   - **Enable MCP Servers**: Enable Model Context Protocol servers for this job (default: disabled)
+   - **MCP Servers**: Select MCP servers for this job (only shown when 'Enable MCP Servers' is checked)
      - Use the "Update MCP Servers List" button to fetch available servers from Codex CLI
-     - MCP servers list is cached for 5 minutes to improve performance
+     - MCP servers configuration is job-specific
    - **LiteLLM API Key**: Override the global LiteLLM API key for this job (default: empty)
 5. Use the **Test Codex CLI** button to verify the CLI is accessible on the node where this job will run
 6. Use the **Update CLI** button to manually download and update the Codex CLI when needed

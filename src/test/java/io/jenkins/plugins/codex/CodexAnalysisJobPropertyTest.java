@@ -162,28 +162,29 @@ public class CodexAnalysisJobPropertyTest {
 
     @Test
     public void testMcpServersFetchingDelegation() {
-        // Test that job property delegates MCP servers fetching to global configuration
+        // Test that job property handles MCP servers fetching independently (no global delegation)
         CodexAnalysisJobProperty.DescriptorImpl descriptor = new CodexAnalysisJobProperty.DescriptorImpl();
 
-        // In test environment, Jenkins instance is not available, so this should return an error
+        // This should attempt to fetch MCP servers directly (will likely fail due to invalid path)
         FormValidation result = descriptor.doFetchAvailableMcpServers("test-codex-path", "test-config-path");
 
-        // Should return an error since Jenkins instance is not available in test
+        // Should return an error due to invalid CLI path, not Jenkins instance issues
         assertNotNull(result);
-        assertTrue("Should return error when Jenkins instance is not available",
+        assertTrue("Should return error due to invalid CLI path",
                    result.kind == FormValidation.Kind.ERROR);
-        assertTrue("Error message should mention Jenkins instance not available",
-                   result.getMessage().contains("Jenkins instance not available"));
+        assertTrue("Error message should mention CLI execution failure",
+                   result.getMessage().contains("Failed to fetch MCP servers from Codex CLI"));
     }
 
     @Test
     public void testGetMcpServersCacheStatus() {
-        // Test the getMcpServersCacheStatus method without Jenkins dependency
+        // Test the getMcpServersCacheStatus method (job-level only)
         CodexAnalysisJobProperty.DescriptorImpl descriptor = new CodexAnalysisJobProperty.DescriptorImpl();
 
-        // This should return a status message when Jenkins is not available
+        // This should return a status message indicating job-specific configuration
         String status = descriptor.getMcpServersCacheStatus();
         assertNotNull(status);
-        assertTrue("Should mention Jenkins instance not available", status.contains("Jenkins instance not available"));
+        assertTrue("Should mention job-specific configuration", status.contains("job-specific"));
+        assertTrue("Should mention Update MCP Servers List button", status.contains("Update MCP Servers List"));
     }
 }

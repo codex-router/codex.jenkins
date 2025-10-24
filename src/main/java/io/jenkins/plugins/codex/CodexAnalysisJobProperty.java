@@ -113,14 +113,14 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
     }
 
     /**
-     * Get the effective default model (job config or global fallback)
+     * Get the effective default model (job config only, no global fallback)
      */
     public String getEffectiveDefaultModel() {
         if (useJobConfig && defaultModel != null && !defaultModel.trim().isEmpty()) {
             return defaultModel;
         }
-        CodexAnalysisPlugin global = CodexAnalysisPlugin.get();
-        return global != null ? global.getDefaultModel() : "kimi-k2";
+        // No global fallback - return default value
+        return "kimi-k2";
     }
 
     /**
@@ -135,14 +135,14 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
     }
 
     /**
-     * Get the effective MCP servers enable flag (job config or global fallback)
+     * Get the effective MCP servers enable flag (job config only, no global fallback)
      */
     public boolean getEffectiveEnableMcpServers() {
         if (useJobConfig) {
             return enableMcpServers;
         }
-        CodexAnalysisPlugin global = CodexAnalysisPlugin.get();
-        return global != null ? global.isEnableMcpServers() : false;
+        // No global fallback - return default value
+        return false;
     }
 
     /**
@@ -157,14 +157,14 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
     }
 
     /**
-     * Get the effective MCP servers list (job config or global fallback)
+     * Get the effective MCP servers list (job config only, no global fallback)
      */
     public List<String> getEffectiveMcpServers() {
         if (useJobConfig && selectedMcpServers != null && !selectedMcpServers.isEmpty()) {
             return selectedMcpServers;
         }
-        CodexAnalysisPlugin global = CodexAnalysisPlugin.get();
-        return global != null ? global.getSelectedMcpServers() : new ArrayList<>();
+        // No global fallback - return empty list
+        return new ArrayList<>();
     }
 
     /**
@@ -397,19 +397,121 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
         }
 
         /**
-         * Fetch available MCP servers from Codex CLI (delegates to global configuration)
+         * Fetch available MCP servers from Codex CLI (job-level only)
          */
         public FormValidation doFetchAvailableMcpServers(@QueryParameter String codexCliPath, @QueryParameter String configPath) {
             try {
-                CodexAnalysisPlugin plugin = CodexAnalysisPlugin.get();
-                if (plugin != null) {
-                    return plugin.doFetchAvailableMcpServers(codexCliPath, configPath);
+                String effectiveCliPath = codexCliPath != null && !codexCliPath.trim().isEmpty()
+                    ? codexCliPath.trim()
+                    : "~/.local/bin/codex";
+
+                String effectiveConfigPath = configPath != null && !configPath.trim().isEmpty()
+                    ? configPath.trim()
+                    : "~/.codex/config.toml";
+
+                // Expand ~ to home directory
+                effectiveCliPath = effectiveCliPath.replaceFirst("^~", System.getProperty("user.home"));
+                effectiveConfigPath = effectiveConfigPath.replaceFirst("^~", System.getProperty("user.home"));
+
+                // Execute codex CLI to get MCP servers information
+                ProcessBuilder pb = new ProcessBuilder(effectiveCliPath, "mcp", "list", "--config", effectiveConfigPath);
+                pb.redirectErrorStream(true);
+                Process process = pb.start();
+
+                // Read output
+                java.io.BufferedReader reader = new java.io.BufferedReader(
+                    new java.io.InputStreamReader(process.getInputStream()));
+                StringBuilder output = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    output.append(line).append("\n");
                 }
-            } catch (IllegalStateException e) {
-                // Jenkins instance not available (e.g., in test environment)
-                return FormValidation.error("Global Codex Analysis Plugin configuration not found - Jenkins instance not available");
+
+                int exitCode = process.waitFor();
+                if (exitCode == 0) {
+                    // Parse the output to extract MCP server names
+                    List<String> servers = parseMcpServersList(output.toString());
+                    if (!servers.isEmpty()) {
+                        return FormValidation.ok("Successfully fetched " + servers.size() + " MCP servers from Codex CLI");
+                    } else {
+                        return FormValidation.warning("No MCP servers found in Codex CLI output");
+                    }
+                } else {
+                    return FormValidation.error("Codex CLI returned exit code: " + exitCode + ". Output: " + output.toString());
+                }
+            } catch (Exception e) {
+                return FormValidation.error("Failed to fetch MCP servers from Codex CLI: " + e.getMessage());
             }
-            return FormValidation.error("Global Codex Analysis Plugin configuration not found");
+        }
+
+        /**
+         * Parse MCP servers list from Codex CLI output
+         */
+        private List<String> parseMcpServersList(String output) {
+            List<String> servers = new ArrayList<>();
+            String[] lines = output.split("\n");
+
+            for (String line : lines) {
+                line = line.trim();
+                // Skip empty lines and headers
+                if (line.isEmpty() || line.startsWith("Available MCP servers:") || line.startsWith("Server") || line.startsWith("-")) {
+                    continue;
+                }
+                // Extract server name (assuming format like "server-name" or "provider/server-name")
+                if (!line.isEmpty() && !line.contains(" ") && (line.contains("-") || line.contains("/") || line.matches("^[a-zA-Z0-9_]+$"))) {
+                    servers.add(line);
+                }
+            }
+
+            // If no servers found, try to parse from config file as fallback
+            if (servers.isEmpty()) {
+                servers.addAll(parseMcpServersFromConfigFile());
+            }
+
+            return servers;
+        }
+
+        /**
+         * Parse MCP servers from configuration file (fallback method)
+         */
+        private List<String> parseMcpServersFromConfigFile() {
+            List<String> serverNames = new ArrayList<>();
+            try {
+                String configPath = "~/.codex/config.toml".replaceFirst("^~", System.getProperty("user.home"));
+                java.io.File configFile = new java.io.File(configPath);
+
+                if (configFile.exists()) {
+                    // Read the TOML file and extract MCP server names
+                    String content = new String(java.nio.file.Files.readAllBytes(configFile.toPath()));
+
+                    // Simple parsing to extract server names from TOML format
+                    // Look for patterns like [mcp.servers."server-name"]
+                    java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(
+                        "\\[mcp\\.servers\\.\"([^\"]+)\"\\]|\\[mcp\\.servers\\.([^\\]]+)\\]"
+                    );
+                    java.util.regex.Matcher matcher = pattern.matcher(content);
+
+                    while (matcher.find()) {
+                        String serverName = matcher.group(1) != null ? matcher.group(1) : matcher.group(2);
+                        if (serverName != null && !serverName.trim().isEmpty()) {
+                            serverNames.add(serverName.trim());
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                // If we can't read the config file, return empty list
+                // This is not critical as the user can still configure manually
+            }
+
+            // If no servers found in config file, provide some common examples
+            if (serverNames.isEmpty()) {
+                serverNames.add("filesystem");
+                serverNames.add("github");
+                serverNames.add("database");
+                serverNames.add("web-search");
+            }
+
+            return serverNames;
         }
 
         /**
@@ -430,19 +532,10 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
         }
 
         /**
-         * Get MCP servers cache status from global configuration
+         * Get MCP servers cache status (job-level only)
          */
         public String getMcpServersCacheStatus() {
-            try {
-                CodexAnalysisPlugin plugin = CodexAnalysisPlugin.get();
-                if (plugin != null) {
-                    return plugin.getMcpServersCacheStatus();
-                }
-            } catch (IllegalStateException e) {
-                // Jenkins instance not available (e.g., in test environment)
-                return "Global configuration not available - Jenkins instance not available";
-            }
-            return "Global configuration not available";
+            return "MCP servers configuration is job-specific. Use the 'Update MCP Servers List' button to fetch available servers.";
         }
 
         /**

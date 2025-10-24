@@ -267,17 +267,18 @@ public class CodexAnalysisBuilder extends Builder {
          * Get available models from configuration
          */
         public String[] getAvailableModels() {
-            CodexAnalysisPlugin plugin = CodexAnalysisPlugin.get();
-            if (plugin != null) {
-                return new String[]{
-                    plugin.getDefaultModel(),
-                    "kimi-k2",
-                    "gpt-4",
-                    "claude-3",
-                    "gemini-pro"
-                };
-            }
-            return new String[]{"kimi-k2", "gpt-4", "claude-3", "gemini-pro"};
+            // Default model options (no global default model anymore)
+            return new String[]{
+                "kimi-k2",
+                "gpt-4",
+                "gpt-4-turbo",
+                "gpt-3.5-turbo",
+                "claude-3-opus",
+                "claude-3-sonnet",
+                "claude-3-haiku",
+                "gemini-pro",
+                "gemini-pro-vision"
+            };
         }
     }
 }

@@ -24,30 +24,8 @@
         </f:entry>
 
 
-        <f:entry title="Default Model" field="defaultModel" description="Default model to use for analysis. Default: 'kimi-k2'">
-            <f:select />
-            <f:validateButton title="Update Model List" progress="Fetching available models from Codex CLI..."
-                             method="doFetchAvailableModels" with="codexCliPath" />
-            <div style="margin-top: 5px; font-size: 11px; color: #666;">
-                ${instance.modelCacheStatus}
-            </div>
-        </f:entry>
-
         <f:entry title="Timeout (seconds)" field="timeoutSeconds" description="Default timeout for analysis operations in seconds. Default: 120">
             <f:number default="120" min="10" max="3600" />
-        </f:entry>
-
-        <f:entry title="Enable MCP Servers" field="enableMcpServers" description="Enable Model Context Protocol servers for enhanced analysis capabilities">
-            <f:checkbox default="false" />
-        </f:entry>
-
-        <f:entry title="MCP Servers" field="selectedMcpServers" description="Select MCP servers from those configured in ~/.codex/config.toml. Only shown when 'Enable MCP Servers' is checked.">
-            <f:select multiple="true" />
-            <f:validateButton title="Update MCP Servers List" progress="Fetching available MCP servers from Codex CLI..."
-                             method="doFetchAvailableMcpServers" with="codexCliPath,configPath" />
-            <div style="margin-top: 5px; font-size: 11px; color: #666;">
-                ${instance.mcpServersCacheStatus}
-            </div>
         </f:entry>
 
         <f:entry title="LiteLLM API Key" field="litellmApiKey" description="API key for LiteLLM service. Leave empty if not using LiteLLM.">

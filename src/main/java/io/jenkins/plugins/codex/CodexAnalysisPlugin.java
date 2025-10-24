@@ -31,21 +31,14 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
     private String codexCliDownloadUsername = "";
     private String codexCliDownloadPassword = "";
     private String configPath = "~/.codex/config.toml";
-    private String defaultModel = "kimi-k2";
     private int timeoutSeconds = 120;
-    private boolean enableMcpServers = false;
     private String litellmApiKey = "";
-    private List<String> selectedMcpServers = new ArrayList<>();
 
     // Cached model list from Codex CLI
     private List<String> cachedModels = new ArrayList<>();
     private long modelCacheTimestamp = 0;
     private static final long MODEL_CACHE_DURATION = 300000; // 5 minutes in milliseconds
 
-    // Cached MCP servers list from Codex CLI
-    private List<String> cachedMcpServers = new ArrayList<>();
-    private long mcpServersCacheTimestamp = 0;
-    private static final long MCP_SERVERS_CACHE_DURATION = 300000; // 5 minutes in milliseconds
 
     @DataBoundConstructor
     public CodexAnalysisPlugin() {
@@ -110,13 +103,6 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
     }
 
 
-    public String getDefaultModel() {
-        return defaultModel;
-    }
-
-    public void setDefaultModel(String defaultModel) {
-        this.defaultModel = defaultModel;
-    }
 
     public int getTimeoutSeconds() {
         return timeoutSeconds;
@@ -126,13 +112,6 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
         this.timeoutSeconds = timeoutSeconds;
     }
 
-    public boolean isEnableMcpServers() {
-        return enableMcpServers;
-    }
-
-    public void setEnableMcpServers(boolean enableMcpServers) {
-        this.enableMcpServers = enableMcpServers;
-    }
 
     public String getLitellmApiKey() {
         return litellmApiKey;
@@ -142,148 +121,7 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
         this.litellmApiKey = litellmApiKey;
     }
 
-    public List<String> getSelectedMcpServers() {
-        return selectedMcpServers;
-    }
 
-    public void setSelectedMcpServers(List<String> selectedMcpServers) {
-        this.selectedMcpServers = selectedMcpServers;
-    }
-
-    /**
-     * Fetch available MCP servers from Codex CLI
-     */
-    public FormValidation doFetchAvailableMcpServers(@QueryParameter String codexCliPath, @QueryParameter String configPath) {
-        try {
-            String effectiveCliPath = codexCliPath != null && !codexCliPath.trim().isEmpty()
-                ? codexCliPath.trim()
-                : this.codexCliPath;
-
-            String effectiveConfigPath = configPath != null && !configPath.trim().isEmpty()
-                ? configPath.trim()
-                : this.configPath;
-
-            // Expand ~ to home directory
-            effectiveCliPath = effectiveCliPath.replaceFirst("^~", System.getProperty("user.home"));
-            effectiveConfigPath = effectiveConfigPath.replaceFirst("^~", System.getProperty("user.home"));
-
-            // Execute codex CLI to get MCP servers information
-            ProcessBuilder pb = new ProcessBuilder(effectiveCliPath, "mcp", "list", "--config", effectiveConfigPath);
-            pb.redirectErrorStream(true);
-            Process process = pb.start();
-
-            // Read output
-            java.io.BufferedReader reader = new java.io.BufferedReader(
-                new java.io.InputStreamReader(process.getInputStream()));
-            StringBuilder output = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                output.append(line).append("\n");
-            }
-
-            int exitCode = process.waitFor();
-            if (exitCode == 0) {
-                // Parse the output to extract MCP server names
-                List<String> servers = parseMcpServersList(output.toString());
-                if (!servers.isEmpty()) {
-                    // Update cache
-                    this.cachedMcpServers = servers;
-                    this.mcpServersCacheTimestamp = System.currentTimeMillis();
-                    save(); // Save the updated cache
-                    return FormValidation.ok("Successfully fetched " + servers.size() + " MCP servers from Codex CLI");
-                } else {
-                    return FormValidation.warning("No MCP servers found in Codex CLI output");
-                }
-            } else {
-                return FormValidation.error("Codex CLI returned exit code: " + exitCode + ". Output: " + output.toString());
-            }
-        } catch (Exception e) {
-            return FormValidation.error("Failed to fetch MCP servers from Codex CLI: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Parse MCP servers list from Codex CLI output
-     */
-    private List<String> parseMcpServersList(String output) {
-        List<String> servers = new ArrayList<>();
-        String[] lines = output.split("\n");
-
-        for (String line : lines) {
-            line = line.trim();
-            // Skip empty lines and headers
-            if (line.isEmpty() || line.startsWith("Available MCP servers:") || line.startsWith("Server") || line.startsWith("-")) {
-                continue;
-            }
-            // Extract server name (assuming format like "server-name" or "provider/server-name")
-            if (!line.isEmpty() && !line.contains(" ") && (line.contains("-") || line.contains("/") || line.matches("^[a-zA-Z0-9_]+$"))) {
-                servers.add(line);
-            }
-        }
-
-        // If no servers found, try to parse from config file as fallback
-        if (servers.isEmpty()) {
-            servers.addAll(parseMcpServersFromConfigFile());
-        }
-
-        return servers;
-    }
-
-    /**
-     * Parse MCP servers from configuration file (fallback method)
-     */
-    private List<String> parseMcpServersFromConfigFile() {
-        List<String> serverNames = new ArrayList<>();
-        try {
-            String configPath = this.configPath.replaceFirst("^~", System.getProperty("user.home"));
-            java.io.File configFile = new java.io.File(configPath);
-
-            if (configFile.exists()) {
-                // Read the TOML file and extract MCP server names
-                String content = new String(java.nio.file.Files.readAllBytes(configFile.toPath()));
-
-                // Simple parsing to extract server names from TOML format
-                // Look for patterns like [mcp.servers."server-name"]
-                java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(
-                    "\\[mcp\\.servers\\.\"([^\"]+)\"\\]|\\[mcp\\.servers\\.([^\\]]+)\\]"
-                );
-                java.util.regex.Matcher matcher = pattern.matcher(content);
-
-                while (matcher.find()) {
-                    String serverName = matcher.group(1) != null ? matcher.group(1) : matcher.group(2);
-                    if (serverName != null && !serverName.trim().isEmpty()) {
-                        serverNames.add(serverName.trim());
-                    }
-                }
-            }
-        } catch (Exception e) {
-            // If we can't read the config file, return empty list
-            // This is not critical as the user can still configure manually
-        }
-
-        // If no servers found in config file, provide some common examples
-        if (serverNames.isEmpty()) {
-            serverNames.add("filesystem");
-            serverNames.add("github");
-            serverNames.add("database");
-            serverNames.add("web-search");
-        }
-
-        return serverNames;
-    }
-
-    /**
-     * Get available MCP server names from the configuration file
-     */
-    public List<String> getAvailableMcpServers() {
-        // Check if cache is valid
-        long currentTime = System.currentTimeMillis();
-        if (cachedMcpServers.isEmpty() || (currentTime - mcpServersCacheTimestamp) > MCP_SERVERS_CACHE_DURATION) {
-            // Return servers from config file if cache is empty or expired
-            return parseMcpServersFromConfigFile();
-        }
-        return new ArrayList<>(cachedMcpServers);
-    }
 
     /**
      * MCP Server Configuration
@@ -561,26 +399,6 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
     }
 
     /**
-     * Fill default model items for the dropdown
-     */
-    public ListBoxModel doFillDefaultModelItems() {
-        ListBoxModel items = new ListBoxModel();
-        List<String> models = getModelOptions();
-
-        // Add current default model first if it's not in the list
-        if (defaultModel != null && !defaultModel.trim().isEmpty() && !models.contains(defaultModel)) {
-            items.add(defaultModel, defaultModel);
-        }
-
-        // Add all available models
-        for (String model : models) {
-            items.add(model, model);
-        }
-
-        return items;
-    }
-
-    /**
      * Get model cache status information
      */
     public String getModelCacheStatus() {
@@ -599,22 +417,4 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
         }
     }
 
-    /**
-     * Get MCP servers cache status information
-     */
-    public String getMcpServersCacheStatus() {
-        if (cachedMcpServers.isEmpty()) {
-            return "No MCP servers cached. Click 'Update MCP Servers List' to fetch from Codex CLI.";
-        }
-
-        long currentTime = System.currentTimeMillis();
-        long timeSinceUpdate = currentTime - mcpServersCacheTimestamp;
-        long minutesSinceUpdate = timeSinceUpdate / 60000;
-
-        if (timeSinceUpdate > MCP_SERVERS_CACHE_DURATION) {
-            return "MCP servers cache expired (" + minutesSinceUpdate + " minutes old). Click 'Update MCP Servers List' to refresh.";
-        } else {
-            return "MCP servers cache is current (" + minutesSinceUpdate + " minutes old, " + cachedMcpServers.size() + " servers cached).";
-        }
-    }
 }

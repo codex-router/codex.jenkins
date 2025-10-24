@@ -69,7 +69,7 @@ public class CodexCliExecutor {
         // Add model - use additional params first, then job config, then global
         String model = additionalParams != null ? additionalParams.get("model") : null;
         if (StringUtils.isBlank(model)) {
-            model = jobConfig != null ? jobConfig.getEffectiveDefaultModel() : globalConfig.getDefaultModel();
+            model = jobConfig != null ? jobConfig.getEffectiveDefaultModel() : "kimi-k2";
         }
         args.add("--model", model);
 
@@ -81,7 +81,7 @@ public class CodexCliExecutor {
         args.add("--timeout", timeout);
 
         // Add MCP servers if enabled
-        boolean enableMcp = jobConfig != null ? jobConfig.getEffectiveEnableMcpServers() : globalConfig.isEnableMcpServers();
+        boolean enableMcp = jobConfig != null ? jobConfig.getEffectiveEnableMcpServers() : false;
         if (enableMcp) {
             String mcpPath = jobConfig != null ? jobConfig.getEffectiveConfigPath() : globalConfig.getConfigPath();
             args.add("--mcp-config", mcpPath);
@@ -148,8 +148,8 @@ public class CodexCliExecutor {
             args.add("--context", context);
         }
 
-        // Use job-level model and timeout if available, otherwise use global
-        String model = jobConfig != null ? jobConfig.getEffectiveDefaultModel() : globalConfig.getDefaultModel();
+        // Use job-level model and timeout if available, otherwise use default
+        String model = jobConfig != null ? jobConfig.getEffectiveDefaultModel() : "kimi-k2";
         int timeout = jobConfig != null ? jobConfig.getEffectiveTimeoutSeconds() : globalConfig.getTimeoutSeconds();
         args.add("--model", model);
         args.add("--timeout", String.valueOf(timeout));
