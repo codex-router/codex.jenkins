@@ -172,6 +172,67 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
         return global != null ? global.getMcpServers() : new ArrayList<>();
     }
 
+    /**
+     * Download and update Codex CLI from the configured URL with authentication
+     * This method is only available for job-level configuration
+     */
+    public boolean updateCodexCli() {
+        if (!useJobConfig) {
+            return false; // Only available for job-level configuration
+        }
+
+        String downloadUrl = getEffectiveCodexCliDownloadUrl();
+        String username = getEffectiveCodexCliDownloadUsername();
+        String password = getEffectiveCodexCliDownloadPassword();
+        String cliPath = getEffectiveCodexCliPath();
+
+        if (downloadUrl == null || downloadUrl.trim().isEmpty()) {
+            return false; // No download URL configured
+        }
+
+        try {
+            // Create HTTP connection with authentication if provided
+            java.net.URL url = new java.net.URL(downloadUrl);
+            java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
+
+            // Set authentication if username and password are provided
+            if (username != null && !username.trim().isEmpty() &&
+                password != null && !password.trim().isEmpty()) {
+                String auth = username + ":" + password;
+                String encodedAuth = java.util.Base64.getEncoder().encodeToString(auth.getBytes());
+                connection.setRequestProperty("Authorization", "Basic " + encodedAuth);
+            }
+
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(30000); // 30 seconds timeout
+            connection.setReadTimeout(60000); // 60 seconds timeout
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode == 200) {
+                // Download the file
+                try (java.io.InputStream inputStream = connection.getInputStream();
+                     java.io.FileOutputStream outputStream = new java.io.FileOutputStream(cliPath)) {
+
+                    byte[] buffer = new byte[4096];
+                    int bytesRead;
+                    while ((bytesRead = inputStream.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, bytesRead);
+                    }
+                }
+
+                // Make the file executable
+                java.io.File cliFile = new java.io.File(cliPath);
+                cliFile.setExecutable(true);
+
+                return true;
+            } else {
+                return false; // Download failed
+            }
+        } catch (Exception e) {
+            return false; // Download failed with exception
+        }
+    }
+
     // Getters and Setters
     public String getCodexCliPath() {
         return codexCliPath;
@@ -349,6 +410,58 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
         }
 
         /**
+         * Manually update Codex CLI from download URL
+         * This method downloads and updates the CLI in the context of the specific job/node
+         */
+        public FormValidation doUpdateCodexCli(@QueryParameter("codexCliPath") String codexCliPath,
+                                             @QueryParameter("codexCliDownloadUrl") String codexCliDownloadUrl,
+                                             @QueryParameter("codexCliDownloadUsername") String codexCliDownloadUsername,
+                                             @QueryParameter("codexCliDownloadPassword") String codexCliDownloadPassword) {
+            try {
+                // Get the current job property from the request context
+                CodexAnalysisJobProperty jobProperty = getCurrentJobProperty();
+
+                // Use effective values from job configuration
+                String effectiveCliPath = jobProperty != null ? jobProperty.getEffectiveCodexCliPath() : "~/.local/bin/codex";
+                String effectiveCliDownloadUrl = jobProperty != null ? jobProperty.getEffectiveCodexCliDownloadUrl() : "";
+                String effectiveCliDownloadUsername = jobProperty != null ? jobProperty.getEffectiveCodexCliDownloadUsername() : "";
+                String effectiveCliDownloadPassword = jobProperty != null ? jobProperty.getEffectiveCodexCliDownloadPassword() : "";
+
+                // Override with provided parameters if they are not empty
+                if (codexCliPath != null && !codexCliPath.trim().isEmpty()) {
+                    effectiveCliPath = codexCliPath;
+                }
+                if (codexCliDownloadUrl != null && !codexCliDownloadUrl.trim().isEmpty()) {
+                    effectiveCliDownloadUrl = codexCliDownloadUrl;
+                }
+                if (codexCliDownloadUsername != null && !codexCliDownloadUsername.trim().isEmpty()) {
+                    effectiveCliDownloadUsername = codexCliDownloadUsername;
+                }
+                if (codexCliDownloadPassword != null && !codexCliDownloadPassword.trim().isEmpty()) {
+                    effectiveCliDownloadPassword = codexCliDownloadPassword;
+                }
+
+                // Check if download URL is configured
+                if (effectiveCliDownloadUrl == null || effectiveCliDownloadUrl.trim().isEmpty()) {
+                    return FormValidation.error("Codex CLI Download URL is required for updating CLI");
+                }
+
+                // Perform the download and update
+                boolean success = downloadAndUpdateCli(effectiveCliDownloadUrl, effectiveCliDownloadUsername,
+                                                     effectiveCliDownloadPassword, effectiveCliPath);
+
+                if (success) {
+                    return FormValidation.ok("Codex CLI successfully updated from: " + effectiveCliDownloadUrl);
+                } else {
+                    return FormValidation.error("Failed to update Codex CLI from: " + effectiveCliDownloadUrl);
+                }
+
+            } catch (Exception e) {
+                return FormValidation.error("Error updating Codex CLI: " + e.getMessage());
+            }
+        }
+
+        /**
          * Test Codex CLI connection with node binding
          * This method tests the CLI in the context of the specific job/node
          */
@@ -409,6 +522,53 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
                 }
             } catch (Exception e) {
                 return FormValidation.error("Failed to test Codex CLI on this node: " + e.getMessage());
+            }
+        }
+
+        /**
+         * Download and update Codex CLI from the specified URL with authentication
+         */
+        private boolean downloadAndUpdateCli(String downloadUrl, String username, String password, String cliPath) {
+            try {
+                // Create HTTP connection with authentication if provided
+                java.net.URL url = new java.net.URL(downloadUrl);
+                java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
+
+                // Set authentication if username and password are provided
+                if (username != null && !username.trim().isEmpty() &&
+                    password != null && !password.trim().isEmpty()) {
+                    String auth = username + ":" + password;
+                    String encodedAuth = java.util.Base64.getEncoder().encodeToString(auth.getBytes());
+                    connection.setRequestProperty("Authorization", "Basic " + encodedAuth);
+                }
+
+                connection.setRequestMethod("GET");
+                connection.setConnectTimeout(30000); // 30 seconds timeout
+                connection.setReadTimeout(60000); // 60 seconds timeout
+
+                int responseCode = connection.getResponseCode();
+                if (responseCode == 200) {
+                    // Download the file
+                    try (java.io.InputStream inputStream = connection.getInputStream();
+                         java.io.FileOutputStream outputStream = new java.io.FileOutputStream(cliPath)) {
+
+                        byte[] buffer = new byte[4096];
+                        int bytesRead;
+                        while ((bytesRead = inputStream.read(buffer)) != -1) {
+                            outputStream.write(buffer, 0, bytesRead);
+                        }
+                    }
+
+                    // Make the file executable
+                    java.io.File cliFile = new java.io.File(cliPath);
+                    cliFile.setExecutable(true);
+
+                    return true;
+                } else {
+                    return false; // Download failed
+                }
+            } catch (Exception e) {
+                return false; // Download failed with exception
             }
         }
 

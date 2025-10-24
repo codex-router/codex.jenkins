@@ -36,7 +36,7 @@ Before using this plugin, ensure you have:
 
 Configure the plugin globally in **Manage Jenkins** → **Configure System** → **Codex Analysis Plugin**:
 
-![System Configuration](system-config.png)
+![System Configuration](global.png)
 
 - **Codex CLI Path**: Path to the Codex CLI executable (default: "~/.local/bin/codex")
 - **Codex CLI Download URL**: Download URL for Codex CLI on Ubuntu/CentOS systems (required)
@@ -53,7 +53,7 @@ Configure the plugin globally in **Manage Jenkins** → **Configure System** →
 
 You can also configure Codex settings per job by adding the **Codex Analysis Plugin Configuration** in the job's configuration page:
 
-![Job Configuration](job-config.png)
+![Job Configuration](job.png)
 
 1. Go to your job's configuration page
 2. Scroll down to find **Codex Analysis Plugin Configuration**
@@ -63,6 +63,7 @@ You can also configure Codex settings per job by adding the **Codex Analysis Plu
    - **Codex CLI Download URL**: Override the global CLI download URL for this job
    - **Codex CLI Download Username**: Override the global CLI download username for this job
    - **Codex CLI Download Password**: Override the global CLI download password for this job
+   - **Manual CLI Update**: Use the "Update CLI" button to manually download and update Codex CLI from the download URL (job-level only)
    - **Config Path**: Override the global config path for this job
    - **MCP Servers Path**: Override the global MCP servers path for this job
    - **Default Model**: Override the global default model for this job
@@ -70,8 +71,9 @@ You can also configure Codex settings per job by adding the **Codex Analysis Plu
    - **Enable MCP Servers**: Override the global MCP servers setting for this job
    - **LiteLLM API Key**: Override the global LiteLLM API key for this job
 5. Use the **Test Codex CLI** button to verify the CLI is accessible on the node where this job will run
+6. Use the **Update CLI** button to manually download and update the Codex CLI when needed
 
-**Note**: CLI testing is only available at the job level to ensure proper node binding. This allows you to test the Codex CLI configuration in the context of the specific node where your job will execute.
+**Note**: CLI testing and updating are only available at the job level to ensure proper node binding. This allows you to test and update the Codex CLI configuration in the context of the specific node where your job will execute.
 
 Job-level settings take precedence over global settings when enabled. If a job-level setting is empty, the global setting will be used as fallback.
 
