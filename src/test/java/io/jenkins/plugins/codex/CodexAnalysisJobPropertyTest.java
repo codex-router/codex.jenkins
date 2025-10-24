@@ -30,6 +30,7 @@ public class CodexAnalysisJobPropertyTest {
         assertEquals(180, jobProperty.getTimeoutSeconds());
         assertFalse(jobProperty.isEnableMcpServers());
         assertEquals("job-litellm-key", jobProperty.getLitellmApiKey());
+        assertTrue(jobProperty.getSelectedMcpServers().isEmpty());
         assertTrue(jobProperty.isUseJobConfig());
     }
 

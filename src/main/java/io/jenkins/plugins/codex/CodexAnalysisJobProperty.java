@@ -30,13 +30,13 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
     private int timeoutSeconds;
     private boolean enableMcpServers;
     private String litellmApiKey;
-    private List<CodexAnalysisPlugin.McpServerConfig> mcpServers;
+    private List<String> selectedMcpServers;
     private boolean useJobConfig;
 
     @DataBoundConstructor
     public CodexAnalysisJobProperty(String codexCliPath, String codexCliDownloadUrl, String codexCliDownloadUsername, String codexCliDownloadPassword, String configPath, String mcpServersPath,
                                    String defaultModel, int timeoutSeconds, boolean enableMcpServers,
-                                   String litellmApiKey, List<CodexAnalysisPlugin.McpServerConfig> mcpServers, boolean useJobConfig) {
+                                   String litellmApiKey, List<String> selectedMcpServers, boolean useJobConfig) {
         this.codexCliPath = codexCliPath;
         this.codexCliDownloadUrl = codexCliDownloadUrl;
         this.codexCliDownloadUsername = codexCliDownloadUsername;
@@ -47,7 +47,7 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
         this.timeoutSeconds = timeoutSeconds;
         this.enableMcpServers = enableMcpServers;
         this.litellmApiKey = litellmApiKey;
-        this.mcpServers = mcpServers != null ? mcpServers : new ArrayList<>();
+        this.selectedMcpServers = selectedMcpServers != null ? selectedMcpServers : new ArrayList<>();
         this.useJobConfig = useJobConfig;
     }
 
@@ -164,12 +164,12 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
     /**
      * Get the effective MCP servers list (job config or global fallback)
      */
-    public List<CodexAnalysisPlugin.McpServerConfig> getEffectiveMcpServers() {
-        if (useJobConfig && mcpServers != null && !mcpServers.isEmpty()) {
-            return mcpServers;
+    public List<String> getEffectiveMcpServers() {
+        if (useJobConfig && selectedMcpServers != null && !selectedMcpServers.isEmpty()) {
+            return selectedMcpServers;
         }
         CodexAnalysisPlugin global = CodexAnalysisPlugin.get();
-        return global != null ? global.getMcpServers() : new ArrayList<>();
+        return global != null ? global.getSelectedMcpServers() : new ArrayList<>();
     }
 
     /**
@@ -314,12 +314,12 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
         this.litellmApiKey = litellmApiKey;
     }
 
-    public List<CodexAnalysisPlugin.McpServerConfig> getMcpServers() {
-        return mcpServers;
+    public List<String> getSelectedMcpServers() {
+        return selectedMcpServers;
     }
 
-    public void setMcpServers(List<CodexAnalysisPlugin.McpServerConfig> mcpServers) {
-        this.mcpServers = mcpServers;
+    public void setSelectedMcpServers(List<String> selectedMcpServers) {
+        this.selectedMcpServers = selectedMcpServers;
     }
 
     public boolean isUseJobConfig() {

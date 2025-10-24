@@ -39,6 +39,10 @@
             <f:checkbox default="true" />
         </f:entry>
 
+        <f:entry title="MCP Servers" field="selectedMcpServers" description="Select MCP servers from those configured in ~/.codex/config.toml. Only shown when 'Enable MCP Servers' is checked.">
+            <f:select multiple="true" />
+        </f:entry>
+
         <f:entry title="LiteLLM API Key" field="litellmApiKey" description="API key for LiteLLM service. Default: 'sk-1234'">
             <f:textbox default="sk-1234" />
         </f:entry>

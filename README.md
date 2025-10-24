@@ -47,6 +47,7 @@ Configure the plugin globally in **Manage Jenkins** → **Configure System** →
 - **Default Model**: Default model to use for analysis (default: "kimi-k2")
 - **Timeout**: Default timeout for analysis operations in seconds (default: 120)
 - **Enable MCP Servers**: Enable Model Context Protocol servers for enhanced analysis capabilities
+- **MCP Servers**: Select MCP servers from those configured in ~/.codex/config.toml (only shown when 'Enable MCP Servers' is checked)
 - **LiteLLM API Key**: API key for LiteLLM service (default: "sk-1234")
 
 ### Job-Level Configuration
@@ -69,13 +70,104 @@ You can also configure Codex settings per job by adding the **Codex Analysis Plu
    - **Default Model**: Override the global default model for this job
    - **Timeout**: Override the global timeout for this job
    - **Enable MCP Servers**: Override the global MCP servers setting for this job
+   - **MCP Servers**: Override the global MCP servers selection for this job (only shown when 'Enable MCP Servers' is checked)
    - **LiteLLM API Key**: Override the global LiteLLM API key for this job
 5. Use the **Test Codex CLI** button to verify the CLI is accessible on the node where this job will run
 6. Use the **Update CLI** button to manually download and update the Codex CLI when needed
 
 **Note**: CLI testing and updating are only available at the job level to ensure proper node binding. This allows you to test and update the Codex CLI configuration in the context of the specific node where your job will execute.
 
-Job-level settings take precedence over global settings when enabled. If a job-level setting is empty, the global setting will be used as fallback.
+### MCP Servers Configuration
+
+The plugin supports Model Context Protocol (MCP) servers for enhanced analysis capabilities. MCP servers provide additional tools and context to the Codex CLI during analysis. The plugin reads MCP server configurations from `~/.codex/config.toml` and allows you to select which servers to enable for analysis.
+
+**Prerequisites:**
+- MCP servers must be configured in `~/.codex/config.toml` following the [Codex CLI documentation](https://github.com/openai/codex/blob/main/docs/config.md#mcp-cli-commands)
+- The plugin will automatically detect available MCP servers from the configuration file
+- All required MCP server executables and dependencies must be installed on the system
+
+**How It Works:**
+1. **Configuration Detection**: The plugin reads `~/.codex/config.toml` and extracts MCP server names
+2. **Server Selection**: Users can select which servers to enable from a dropdown list
+3. **Multi-Selection**: Multiple servers can be selected for combined functionality
+4. **Fallback Support**: If no servers are found, common examples are provided
+
+#### MCP Server Types
+
+**1. stdio Servers**
+- **Purpose**: Local command-line tools and scripts
+- **Configuration**: Command and arguments to execute
+- **Use Cases**: File system tools, local utilities, custom scripts
+
+**2. http Servers**
+- **Purpose**: Remote HTTP-based services
+- **Configuration**: URL endpoint and authentication
+- **Use Cases**: Web APIs, remote services, cloud-based tools
+
+#### MCP Server Configuration Fields
+
+Each MCP server can be configured with the following fields:
+
+- **Name**: Unique identifier for the server
+- **Type**: Server type (stdio or http)
+- **Enabled**: Whether this server is active
+- **Command**: Command to execute (stdio servers only)
+- **Arguments**: Command line arguments (stdio servers only)
+- **URL**: HTTP endpoint URL (http servers only)
+- **Bearer Token Environment Variable**: Environment variable containing authentication token (http servers only)
+- **Startup Timeout**: Timeout for server startup (default: 10 seconds)
+- **Tool Timeout**: Timeout for individual tool calls (default: 60 seconds)
+
+#### Configuration Examples
+
+**Example ~/.codex/config.toml with MCP Servers:**
+```toml
+[mcp.servers."filesystem"]
+type = "stdio"
+command = "/usr/local/bin/mcp-filesystem"
+args = ["--root", "/workspace"]
+startup_timeout_sec = 10
+tool_timeout_sec = 60
+
+[mcp.servers."github-api"]
+type = "http"
+url = "https://api.github.com/mcp"
+bearer_token_env_var = "GITHUB_TOKEN"
+startup_timeout_sec = 15
+tool_timeout_sec = 120
+
+[mcp.servers."database"]
+type = "stdio"
+command = "/opt/mcp-tools/db-connector"
+args = ["--host", "localhost", "--port", "5432", "--database", "myapp"]
+startup_timeout_sec = 20
+tool_timeout_sec = 90
+```
+
+**Jenkins Plugin Selection:**
+- In the Jenkins configuration, you would see a dropdown with options: "filesystem", "github-api", "database"
+- You can select multiple servers (e.g., "filesystem" and "github-api") for multi-selection
+
+#### MCP Server Configuration Workflow
+
+**Step 1: Configure MCP Servers in ~/.codex/config.toml**
+1. Edit the `~/.codex/config.toml` file to define your MCP servers
+2. Follow the [Codex CLI documentation](https://github.com/openai/codex/blob/main/docs/config.md#mcp-cli-commands) for proper configuration format
+3. Ensure all required commands and dependencies are installed
+
+**Step 2: Enable MCP Servers in Jenkins**
+1. Check the "Enable MCP Servers" checkbox in global or job configuration
+2. The "MCP Servers" selection list will become visible
+
+**Step 3: Select MCP Servers**
+1. Choose which MCP servers to enable from the dropdown list
+2. The list shows all servers configured in `~/.codex/config.toml`
+3. You can select multiple servers for multi-selection
+
+**Step 4: Test and Validate**
+1. Use the "Test Codex CLI" button to verify configuration
+2. Check Jenkins logs for any MCP server startup issues
+3. Monitor analysis performance with MCP servers enabled
 
 ### Configuration Hierarchy
 

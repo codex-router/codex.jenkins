@@ -36,7 +36,7 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
     private int timeoutSeconds = 120;
     private boolean enableMcpServers = true;
     private String litellmApiKey = "sk-1234";
-    private List<McpServerConfig> mcpServers = new ArrayList<>();
+    private List<String> selectedMcpServers = new ArrayList<>();
 
     @DataBoundConstructor
     public CodexAnalysisPlugin() {
@@ -140,12 +140,55 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
         this.litellmApiKey = litellmApiKey;
     }
 
-    public List<McpServerConfig> getMcpServers() {
-        return mcpServers;
+    public List<String> getSelectedMcpServers() {
+        return selectedMcpServers;
     }
 
-    public void setMcpServers(List<McpServerConfig> mcpServers) {
-        this.mcpServers = mcpServers;
+    public void setSelectedMcpServers(List<String> selectedMcpServers) {
+        this.selectedMcpServers = selectedMcpServers;
+    }
+
+    /**
+     * Get available MCP server names from the configuration file
+     */
+    public List<String> getAvailableMcpServers() {
+        List<String> serverNames = new ArrayList<>();
+        try {
+            String configPath = mcpServersPath.replaceFirst("^~", System.getProperty("user.home"));
+            java.io.File configFile = new java.io.File(configPath);
+
+            if (configFile.exists()) {
+                // Read the TOML file and extract MCP server names
+                String content = new String(java.nio.file.Files.readAllBytes(configFile.toPath()));
+
+                // Simple parsing to extract server names from TOML format
+                // Look for patterns like [mcp.servers."server-name"]
+                java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(
+                    "\\[mcp\\.servers\\.\"([^\"]+)\"\\]|\\[mcp\\.servers\\.([^\\]]+)\\]"
+                );
+                java.util.regex.Matcher matcher = pattern.matcher(content);
+
+                while (matcher.find()) {
+                    String serverName = matcher.group(1) != null ? matcher.group(1) : matcher.group(2);
+                    if (serverName != null && !serverName.trim().isEmpty()) {
+                        serverNames.add(serverName.trim());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // If we can't read the config file, return empty list
+            // This is not critical as the user can still configure manually
+        }
+
+        // If no servers found in config file, provide some common examples
+        if (serverNames.isEmpty()) {
+            serverNames.add("filesystem");
+            serverNames.add("github");
+            serverNames.add("database");
+            serverNames.add("web-search");
+        }
+
+        return serverNames;
     }
 
     /**
