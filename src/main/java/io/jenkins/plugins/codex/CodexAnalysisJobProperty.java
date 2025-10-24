@@ -443,7 +443,7 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
 
                 // Check if download URL is configured
                 if (effectiveCliDownloadUrl == null || effectiveCliDownloadUrl.trim().isEmpty()) {
-                    return FormValidation.error("Codex CLI Download URL is required for updating CLI");
+                    return FormValidation.error("Codex CLI Download URL is required for updating CLI. Please configure the download URL to use this feature.");
                 }
 
                 // Perform the download and update

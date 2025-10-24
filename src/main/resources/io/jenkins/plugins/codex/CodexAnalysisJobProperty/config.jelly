@@ -12,7 +12,7 @@
                 <f:textbox />
             </f:entry>
 
-            <f:entry title="Codex CLI Download URL" field="codexCliDownloadUrl" description="Download URL for Codex CLI on Ubuntu/CentOS systems. Leave empty to use global configuration.">
+            <f:entry title="Codex CLI Download URL" field="codexCliDownloadUrl" description="Download URL for Codex CLI on Ubuntu/CentOS systems. Optional configuration - leave empty to use global configuration or if CLI is already installed.">
                 <f:textbox />
             </f:entry>
 

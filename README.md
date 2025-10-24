@@ -20,6 +20,7 @@ Before using this plugin, ensure you have:
    - Follow the installation guide at [codex.sh](https://github.com/codex-router/codex.sh/blob/main/README.md)
    - Ensure the CLI is in your system PATH
    - Configure your API keys and model settings
+   - **Note**: The Codex CLI Download URL configuration is optional - you can install the CLI manually or use the plugin's download feature
 
 2. **Network access** to the model provider's API
 
@@ -39,7 +40,7 @@ Configure the plugin globally in **Manage Jenkins** → **Configure System** →
 ![System Configuration](global.png)
 
 - **Codex CLI Path**: Path to the Codex CLI executable (default: "~/.local/bin/codex")
-- **Codex CLI Download URL**: Download URL for Codex CLI on Ubuntu/CentOS systems (required)
+- **Codex CLI Download URL**: Download URL for Codex CLI on Ubuntu/CentOS systems (optional)
 - **Codex CLI Download Username**: Username for authenticated download URL (optional)
 - **Codex CLI Download Password**: Password for authenticated download URL (optional)
 - **Config Path**: Path to Codex configuration file (default: "~/.codex/config.toml")
@@ -61,7 +62,7 @@ You can also configure Codex settings per job by adding the **Codex Analysis Plu
 3. Enable **Use Job-Level Configuration** to override global settings
 4. Configure job-specific settings:
    - **Codex CLI Path**: Override the global CLI path for this job
-   - **Codex CLI Download URL**: Override the global CLI download URL for this job
+   - **Codex CLI Download URL**: Override the global CLI download URL for this job (optional)
    - **Codex CLI Download Username**: Override the global CLI download username for this job
    - **Codex CLI Download Password**: Override the global CLI download password for this job
    - **Manual CLI Update**: Use the "Update CLI" button to manually download and update Codex CLI from the download URL (job-level only)
@@ -402,6 +403,7 @@ For jobs that need specific Codex CLI configurations:
    - Ensure the CLI is installed and in PATH
    - Check the "Codex CLI Path" configuration (global or job-level)
    - Use the job-level "Test Codex CLI" button to verify node accessibility
+   - **Note**: If you need to download the CLI automatically, configure the "Codex CLI Download URL" (optional)
 
 2. **Timeout errors**
    - Increase the timeout value for complex analyses

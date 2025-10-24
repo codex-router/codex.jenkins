@@ -269,7 +269,7 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
      */
     public FormValidation doCheckCodexCliDownloadUrl(@QueryParameter String value) {
         if (value == null || value.trim().isEmpty()) {
-            return FormValidation.error("Codex CLI download URL is required for Ubuntu/CentOS systems");
+            return FormValidation.warning("Codex CLI download URL is optional. Leave empty if CLI is already installed or will be installed manually.");
         }
         // Basic URL validation
         String trimmedValue = value.trim();

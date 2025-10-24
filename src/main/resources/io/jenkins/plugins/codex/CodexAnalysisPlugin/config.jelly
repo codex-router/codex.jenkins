@@ -7,7 +7,7 @@
             <f:textbox default="~/.local/bin/codex" />
         </f:entry>
 
-        <f:entry title="Codex CLI Download URL" field="codexCliDownloadUrl" description="Download URL for Codex CLI on Ubuntu/CentOS systems. Required configuration.">
+        <f:entry title="Codex CLI Download URL" field="codexCliDownloadUrl" description="Download URL for Codex CLI on Ubuntu/CentOS systems. Optional configuration - leave empty if CLI is already installed or will be installed manually.">
             <f:textbox />
         </f:entry>
 
