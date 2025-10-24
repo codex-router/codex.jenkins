@@ -508,4 +508,4 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 ## Reference
 
-[Codex Config](https://github.com/openai/codex/blob/main/docs/config.md)
+[codex-config](https://github.com/openai/codex/blob/main/docs/config.md)
