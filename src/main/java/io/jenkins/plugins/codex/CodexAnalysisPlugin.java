@@ -32,6 +32,7 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
     private String defaultModel = "kimi-k2";
     private int timeoutSeconds = 120;
     private boolean enableMcpServers = true;
+    private String litellmApiKey = "sk-1234";
     private List<McpServerConfig> mcpServers = new ArrayList<>();
 
     @DataBoundConstructor
@@ -102,6 +103,14 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
 
     public void setEnableMcpServers(boolean enableMcpServers) {
         this.enableMcpServers = enableMcpServers;
+    }
+
+    public String getLitellmApiKey() {
+        return litellmApiKey;
+    }
+
+    public void setLitellmApiKey(String litellmApiKey) {
+        this.litellmApiKey = litellmApiKey;
     }
 
     public List<McpServerConfig> getMcpServers() {
@@ -219,6 +228,19 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
     public FormValidation doCheckDefaultModel(@QueryParameter String value) {
         if (value == null || value.trim().isEmpty()) {
             return FormValidation.warning("Default model is empty, will use 'kimi-k2'");
+        }
+        return FormValidation.ok();
+    }
+
+    /**
+     * Validate LiteLLM API key
+     */
+    public FormValidation doCheckLitellmApiKey(@QueryParameter String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return FormValidation.warning("LiteLLM API key is empty, will use default 'sk-1234'");
+        }
+        if (value.length() < 10) {
+            return FormValidation.warning("API key seems too short");
         }
         return FormValidation.ok();
     }

@@ -26,19 +26,21 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
     private String defaultModel;
     private int timeoutSeconds;
     private boolean enableMcpServers;
+    private String litellmApiKey;
     private List<CodexAnalysisPlugin.McpServerConfig> mcpServers;
     private boolean useJobConfig;
 
     @DataBoundConstructor
     public CodexAnalysisJobProperty(String codexCliPath, String configPath, String mcpServersPath,
                                    String defaultModel, int timeoutSeconds, boolean enableMcpServers,
-                                   List<CodexAnalysisPlugin.McpServerConfig> mcpServers, boolean useJobConfig) {
+                                   String litellmApiKey, List<CodexAnalysisPlugin.McpServerConfig> mcpServers, boolean useJobConfig) {
         this.codexCliPath = codexCliPath;
         this.configPath = configPath;
         this.mcpServersPath = mcpServersPath;
         this.defaultModel = defaultModel;
         this.timeoutSeconds = timeoutSeconds;
         this.enableMcpServers = enableMcpServers;
+        this.litellmApiKey = litellmApiKey;
         this.mcpServers = mcpServers != null ? mcpServers : new ArrayList<>();
         this.useJobConfig = useJobConfig;
     }
@@ -110,6 +112,17 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
     }
 
     /**
+     * Get the effective LiteLLM API key (job config or global fallback)
+     */
+    public String getEffectiveLitellmApiKey() {
+        if (useJobConfig && litellmApiKey != null && !litellmApiKey.trim().isEmpty()) {
+            return litellmApiKey;
+        }
+        CodexAnalysisPlugin global = CodexAnalysisPlugin.get();
+        return global != null ? global.getLitellmApiKey() : "sk-1234";
+    }
+
+    /**
      * Get the effective MCP servers list (job config or global fallback)
      */
     public List<CodexAnalysisPlugin.McpServerConfig> getEffectiveMcpServers() {
@@ -167,6 +180,14 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
 
     public void setEnableMcpServers(boolean enableMcpServers) {
         this.enableMcpServers = enableMcpServers;
+    }
+
+    public String getLitellmApiKey() {
+        return litellmApiKey;
+    }
+
+    public void setLitellmApiKey(String litellmApiKey) {
+        this.litellmApiKey = litellmApiKey;
     }
 
     public List<CodexAnalysisPlugin.McpServerConfig> getMcpServers() {
@@ -269,7 +290,8 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
          * This method tests the CLI in the context of the specific job/node
          */
         public FormValidation doTestCodexCli(@QueryParameter("codexCliPath") String codexCliPath,
-                                           @QueryParameter("configPath") String configPath) {
+                                           @QueryParameter("configPath") String configPath,
+                                           @QueryParameter("litellmApiKey") String litellmApiKey) {
             try {
                 // Get the current job property from the request context
                 CodexAnalysisJobProperty jobProperty = getCurrentJobProperty();
@@ -277,6 +299,7 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
                 // Use effective values from job configuration
                 String effectiveCliPath = jobProperty != null ? jobProperty.getEffectiveCodexCliPath() : "~/.local/bin/codex";
                 String effectiveConfigPath = jobProperty != null ? jobProperty.getEffectiveConfigPath() : "~/.codex/config.toml";
+                String effectiveLitellmApiKey = jobProperty != null ? jobProperty.getEffectiveLitellmApiKey() : "sk-1234";
 
                 // Override with provided parameters if they are not empty
                 if (codexCliPath != null && !codexCliPath.trim().isEmpty()) {
@@ -284,6 +307,9 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
                 }
                 if (configPath != null && !configPath.trim().isEmpty()) {
                     effectiveConfigPath = configPath;
+                }
+                if (litellmApiKey != null && !litellmApiKey.trim().isEmpty()) {
+                    effectiveLitellmApiKey = litellmApiKey;
                 }
 
                 // Test CLI availability using a simple version check

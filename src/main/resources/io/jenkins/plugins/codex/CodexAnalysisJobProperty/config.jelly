@@ -31,6 +31,10 @@
             <f:entry title="Enable MCP Servers" field="enableMcpServers" description="Enable Model Context Protocol servers for enhanced analysis capabilities">
                 <f:checkbox default="true" />
             </f:entry>
+
+            <f:entry title="LiteLLM API Key" field="litellmApiKey" description="API key for LiteLLM service. Leave empty to use global configuration.">
+                <f:textbox />
+            </f:entry>
         </f:advanced>
     </f:section>
 
@@ -38,7 +42,7 @@
         <f:entry title="Test Codex CLI" description="Test the Codex CLI configuration on the node where this job will run. This ensures proper node binding and CLI accessibility.">
             <f:validateButton title="Test Codex CLI"
                              method="doTestCodexCli"
-                             with="codexCliPath,configPath" />
+                             with="codexCliPath,configPath,litellmApiKey" />
         </f:entry>
     </f:section>
 

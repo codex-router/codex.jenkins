@@ -26,6 +26,10 @@
         <f:entry title="Enable MCP Servers" field="enableMcpServers" description="Enable Model Context Protocol servers for enhanced analysis capabilities">
             <f:checkbox default="true" />
         </f:entry>
+
+        <f:entry title="LiteLLM API Key" field="litellmApiKey" description="API key for LiteLLM service. Default: 'sk-1234'">
+            <f:textbox default="sk-1234" />
+        </f:entry>
     </f:section>
 
 </j:jelly>

@@ -44,6 +44,7 @@ Configure the plugin globally in **Manage Jenkins** → **Configure System** →
 - **Default Model**: Default model to use for analysis (default: "kimi-k2")
 - **Timeout**: Default timeout for analysis operations in seconds (default: 120)
 - **Enable MCP Servers**: Enable Model Context Protocol servers for enhanced analysis capabilities
+- **LiteLLM API Key**: API key for LiteLLM service (default: "sk-1234")
 
 ### Job-Level Configuration
 
@@ -61,6 +62,7 @@ You can also configure Codex settings per job by adding the **Codex Analysis Plu
    - **Default Model**: Override the global default model for this job
    - **Timeout**: Override the global timeout for this job
    - **Enable MCP Servers**: Override the global MCP servers setting for this job
+   - **LiteLLM API Key**: Override the global LiteLLM API key for this job
 5. Use the **Test Codex CLI** button to verify the CLI is accessible on the node where this job will run
 
 **Note**: CLI testing is only available at the job level to ensure proper node binding. This allows you to test the Codex CLI configuration in the context of the specific node where your job will execute.

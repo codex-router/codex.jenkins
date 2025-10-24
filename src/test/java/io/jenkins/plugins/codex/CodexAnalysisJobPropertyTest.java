@@ -17,7 +17,7 @@ public class CodexAnalysisJobPropertyTest {
     public void testJobPropertyCreation() {
         jobProperty = new CodexAnalysisJobProperty(
             "job-codex", "job-config.toml", "job-mcp.toml",
-            "job-model", 180, false, new ArrayList<>(), true
+            "job-model", 180, false, "job-litellm-key", new ArrayList<>(), true
         );
 
         assertEquals("job-codex", jobProperty.getCodexCliPath());
@@ -26,6 +26,7 @@ public class CodexAnalysisJobPropertyTest {
         assertEquals("job-model", jobProperty.getDefaultModel());
         assertEquals(180, jobProperty.getTimeoutSeconds());
         assertFalse(jobProperty.isEnableMcpServers());
+        assertEquals("job-litellm-key", jobProperty.getLitellmApiKey());
         assertTrue(jobProperty.isUseJobConfig());
     }
 
@@ -33,7 +34,7 @@ public class CodexAnalysisJobPropertyTest {
     public void testEffectiveValuesWithJobConfig() {
         jobProperty = new CodexAnalysisJobProperty(
             "job-codex", "job-config.toml", "job-mcp.toml",
-            "job-model", 180, false, new ArrayList<>(), true
+            "job-model", 180, false, "job-litellm-key", new ArrayList<>(), true
         );
 
         // When useJobConfig is true, job values should be returned
@@ -49,7 +50,7 @@ public class CodexAnalysisJobPropertyTest {
     public void testEffectiveValuesWithoutJobConfig() {
         jobProperty = new CodexAnalysisJobProperty(
             "job-codex", "job-config.toml", "job-mcp.toml",
-            "job-model", 180, false, new ArrayList<>(), false
+            "job-model", 180, false, "job-litellm-key", new ArrayList<>(), false
         );
 
         // When useJobConfig is false, the raw values should still be set
@@ -65,7 +66,7 @@ public class CodexAnalysisJobPropertyTest {
     @Test
     public void testEffectiveValuesWithEmptyJobConfig() {
         jobProperty = new CodexAnalysisJobProperty(
-            "", "", "", "", 0, false, new ArrayList<>(), true
+            "", "", "", "", 0, false, "", new ArrayList<>(), true
         );
 
         // When job config is enabled but values are empty, the raw values should be empty
@@ -92,7 +93,7 @@ public class CodexAnalysisJobPropertyTest {
     public void testSettersAndGetters() {
         jobProperty = new CodexAnalysisJobProperty(
             "initial-codex", "initial-config.toml", "initial-mcp.toml",
-            "initial-model", 120, true, new ArrayList<>(), false
+            "initial-model", 120, true, "initial-litellm-key", new ArrayList<>(), false
         );
 
         // Test setters
@@ -102,6 +103,7 @@ public class CodexAnalysisJobPropertyTest {
         jobProperty.setDefaultModel("new-model");
         jobProperty.setTimeoutSeconds(240);
         jobProperty.setEnableMcpServers(false);
+        jobProperty.setLitellmApiKey("new-litellm-key");
         jobProperty.setUseJobConfig(true);
 
         // Test getters
@@ -111,6 +113,7 @@ public class CodexAnalysisJobPropertyTest {
         assertEquals("new-model", jobProperty.getDefaultModel());
         assertEquals(240, jobProperty.getTimeoutSeconds());
         assertFalse(jobProperty.isEnableMcpServers());
+        assertEquals("new-litellm-key", jobProperty.getLitellmApiKey());
         assertTrue(jobProperty.isUseJobConfig());
     }
 }
