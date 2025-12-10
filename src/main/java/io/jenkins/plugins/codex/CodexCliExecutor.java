@@ -200,6 +200,110 @@ public class CodexCliExecutor {
     }
 
     /**
+     * Execute an interactive chat session with Codex CLI
+     * Streams the chat conversation to the console log in real-time
+     */
+    public void executeInteractiveChat(String initialMessage, String context, Map<String, String> additionalParams) throws IOException, InterruptedException {
+        CodexAnalysisPlugin globalConfig = CodexAnalysisPlugin.get();
+        if (globalConfig == null) {
+            throw new IOException("Codex Analysis Plugin configuration not found");
+        }
+
+        ArgumentListBuilder args = new ArgumentListBuilder();
+
+        // Use job-level CLI path if available, otherwise use global
+        String cliPath = jobConfig != null ? jobConfig.getEffectiveCodexCliPath() : globalConfig.getCodexCliPath();
+        args.add(cliPath);
+        args.add("chat");
+
+        // Add initial message if provided
+        if (StringUtils.isNotBlank(initialMessage)) {
+            args.add("--message", initialMessage);
+        }
+
+        // Add context if provided
+        if (StringUtils.isNotBlank(context)) {
+            args.add("--context", context);
+        }
+
+        // Add model - use additional params first, then job config, then global
+        String model = additionalParams != null ? additionalParams.get("model") : null;
+        if (StringUtils.isBlank(model)) {
+            model = jobConfig != null ? jobConfig.getEffectiveDefaultModel() : "";
+        }
+        // If still blank, we need to fetch from CLI or use first available model
+        if (StringUtils.isBlank(model)) {
+            // Try to get first available model from CLI
+            String[] availableModels = jobConfig != null ?
+                ((CodexAnalysisJobProperty.DescriptorImpl) jobConfig.getDescriptor()).getAvailableModels() : new String[0];
+            if (availableModels.length > 0) {
+                model = availableModels[0];
+            } else {
+                throw new RuntimeException("No model specified and no models available from Codex CLI. Please configure a default model or ensure Codex CLI is properly installed.");
+            }
+        }
+        args.add("--model", model);
+
+        // Add timeout - use additional params first, then job config, then global
+        String timeout = additionalParams != null ? additionalParams.get("timeout") : null;
+        if (StringUtils.isBlank(timeout)) {
+            timeout = String.valueOf(jobConfig != null ? jobConfig.getEffectiveTimeoutSeconds() : globalConfig.getTimeoutSeconds());
+        }
+        args.add("--timeout", timeout);
+
+        // Add MCP servers if enabled
+        boolean enableMcp = jobConfig != null ? jobConfig.getEffectiveEnableMcpServers() : false;
+        if (enableMcp) {
+            String mcpPath = jobConfig != null ? jobConfig.getEffectiveConfigPath() : globalConfig.getConfigPath();
+            args.add("--mcp-config", mcpPath);
+        }
+
+        // Add additional parameters
+        if (additionalParams != null) {
+            for (Map.Entry<String, String> entry : additionalParams.entrySet()) {
+                String key = entry.getKey();
+                // Skip model and timeout as they're already handled
+                if (!key.equals("model") && !key.equals("timeout")) {
+                    args.add("--" + key, entry.getValue());
+                }
+            }
+        }
+
+        // Execute command with real-time output streaming
+        listener.getLogger().println("=== STARTING CODEX INTERACTIVE CHAT ===");
+        listener.getLogger().println("Model: " + model);
+        listener.getLogger().println("Timeout: " + timeout + " seconds");
+        if (StringUtils.isNotBlank(initialMessage)) {
+            listener.getLogger().println("Initial Message: " + initialMessage);
+        }
+        listener.getLogger().println("---");
+        listener.getLogger().println("");
+
+        try {
+            Launcher.ProcStarter procStarter = launcher.launch()
+                    .cmds(args)
+                    .envs(environment)
+                    .stdout(listener.getLogger())
+                    .stderr(listener.getLogger())
+                    .pwd(workspace);
+
+            int exitCode = procStarter.start().join();
+
+            listener.getLogger().println("");
+            listener.getLogger().println("---");
+            if (exitCode != 0) {
+                listener.error("Codex chat session ended with exit code " + exitCode);
+            } else {
+                listener.getLogger().println("=== CODEX CHAT SESSION COMPLETED ===");
+            }
+
+        } catch (Exception e) {
+            listener.error("Error during Codex chat session: " + e.getMessage());
+            throw new IOException("Codex chat session failed: " + e.getMessage(), e);
+        }
+    }
+
+    /**
      * Check if Codex CLI is available and properly configured
      */
     public boolean isCodexAvailable() throws IOException, InterruptedException {

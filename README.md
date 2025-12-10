@@ -5,9 +5,11 @@ A Jenkins plugin that provides AI-powered analysis capabilities for pipeline sta
 ## Features
 
 - **Pipeline Step Analysis**: Use the `codexAnalysis` step in your Pipeline scripts
+- **Interactive Chat**: Use the `codexChat` step for real-time interactive chat sessions with Codex CLI
 - **Stage-level Analysis**: Automatic analysis of pipeline stages with context gathering
-- **Freestyle Job Support**: Add Codex analysis as a build step in freestyle jobs
+- **Freestyle Job Support**: Add Codex analysis or interactive chat as build steps in freestyle jobs
 - **Multiple Analysis Types**: Build, test, deployment, security, performance, and quality analysis
+- **Real-Time Console Logging**: All chat conversations are streamed to Jenkins console output in real-time
 - **CLI-Only Model Management**: Dynamic model lists fetched directly from Codex CLI (no hardcoded models)
 - **Real-Time Model Updates**: Model lists always reflect current CLI capabilities
 - **MCP Servers Support**: Model Context Protocol servers for enhanced analysis capabilities
@@ -182,7 +184,7 @@ tool_timeout_sec = 90
 The plugin uses a three-tier configuration hierarchy:
 
 1. **Step/Builder Level** (Highest Priority)
-   - Parameters specified directly in the `codexAnalysis` step or build step
+   - Parameters specified directly in the `codexAnalysis` or `codexChat` step or build step
    - Overrides both job-level and global settings
 
 2. **Job Level** (Medium Priority)
@@ -193,6 +195,8 @@ The plugin uses a three-tier configuration hierarchy:
 3. **Global Level** (Lowest Priority)
    - System-wide settings in "Manage Jenkins" → "Configure System"
    - Used as fallback when job-level settings are empty or disabled
+
+**Note**: Both `codexAnalysis` and `codexChat` steps respect this configuration hierarchy for model selection, timeout, and other settings.
 
 ### Best Practices
 
@@ -237,7 +241,38 @@ pipeline {
 }
 ```
 
+### Interactive Chat Usage
+
+Use the `codexChat` step for interactive chat sessions with Codex CLI. All conversations are logged to the console in real-time:
+
+```groovy
+pipeline {
+    agent any
+
+    stages {
+        stage('Interactive Chat') {
+            steps {
+                codexChat(
+                    initialMessage: 'Hello, can you help me analyze my build?',
+                    model: 'gpt-4',
+                    timeoutSeconds: 300
+                )
+            }
+        }
+    }
+}
+```
+
+**Chat Step Parameters:**
+- **initialMessage**: Optional initial message to start the chat session
+- **context**: Optional context information (if not provided, build context is automatically included)
+- **model**: Model to use for chat (optional, uses default from job or global config)
+- **timeoutSeconds**: Timeout for chat session in seconds (default: 120)
+- **additionalParams**: Additional parameters in key=value format
+
 ### Freestyle Job Usage
+
+#### Codex Analysis Build Step
 
 1. Go to your job configuration
 2. Add "Codex Analysis" build step
@@ -250,6 +285,19 @@ pipeline {
    - **Include Build Context**: Include build environment in analysis
    - **Fail on Error**: Fail build if analysis encounters errors
    - **Additional Parameters**: Custom parameters in key=value format
+
+#### Codex Interactive Chat Build Step
+
+1. Go to your job configuration
+2. Add "Codex Interactive Chat" build step
+3. Configure the chat parameters:
+   - **Initial Message**: Optional initial message to start the chat session
+   - **Context**: Optional context information (if not provided, build context is automatically included)
+   - **Model**: Model to use for chat (optional, uses default from job or global config)
+   - **Timeout**: Chat session timeout in seconds (default: 120)
+   - **Additional Parameters**: Custom parameters in key=value format
+
+**Note**: All chat conversations are streamed to the Jenkins console output in real-time, making them visible for all Jenkins jobs.
 
 ### Analysis Types
 
@@ -358,6 +406,63 @@ pipeline {
                     )
 
                     echo "Analysis result: ${analysisResult}"
+                }
+            }
+        }
+    }
+}
+```
+
+### Interactive Chat with Build Context
+
+```groovy
+pipeline {
+    agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                sh 'mvn clean compile'
+            }
+        }
+
+        stage('Chat Session') {
+            steps {
+                // Start interactive chat with build context automatically included
+                codexChat(
+                    initialMessage: 'Can you help me understand any issues in my build?',
+                    model: 'gpt-4',
+                    timeoutSeconds: 300
+                )
+            }
+        }
+    }
+}
+```
+
+### Chat with Custom Context
+
+```groovy
+pipeline {
+    agent any
+
+    stages {
+        stage('Chat with Custom Context') {
+            steps {
+                script {
+                    def customContext = """
+                        Project: My Application
+                        Build Number: ${env.BUILD_NUMBER}
+                        Branch: ${env.BRANCH_NAME}
+                        Recent Changes: ${sh(script: 'git log -5 --oneline', returnStdout: true)}
+                    """.trim()
+
+                    codexChat(
+                        initialMessage: 'Review my recent changes and suggest improvements',
+                        context: customContext,
+                        model: 'claude-3-opus',
+                        timeoutSeconds: 600
+                    )
                 }
             }
         }

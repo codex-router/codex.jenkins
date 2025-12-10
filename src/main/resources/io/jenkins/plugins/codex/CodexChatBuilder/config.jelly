@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <link rel="stylesheet" href="${resURL}/plugin/codex-analysis/css/codex-analysis.css" />
+
+    <f:entry title="Initial Message" field="initialMessage" description="Initial message to start the chat session. Leave empty to start with default greeting.">
+        <f:textarea />
+    </f:entry>
+
+    <f:entry title="Context" field="context" description="Context information for the chat session. Leave empty to use build context automatically.">
+        <f:textarea />
+    </f:entry>
+
+    <f:entry title="Model" field="model" description="Model to use for chat. Leave empty to use default model from job or global configuration.">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="Timeout (seconds)" field="timeoutSeconds" description="Timeout for chat session in seconds">
+        <f:number default="120" min="10" max="3600" />
+    </f:entry>
+
+    <f:entry title="Additional Parameters" field="additionalParams" description="Additional parameters in key=value format, one per line">
+        <f:textarea />
+    </f:entry>
+
+</j:jelly>
