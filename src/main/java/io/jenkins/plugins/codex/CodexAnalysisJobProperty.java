@@ -5,6 +5,7 @@ import hudson.model.Job;
 import hudson.model.JobProperty;
 import hudson.model.JobPropertyDescriptor;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -475,10 +476,17 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
          * Parse MCP servers from configuration file (fallback method)
          */
         private List<String> parseMcpServersFromConfigFile() {
+            return parseMcpServersFromConfigFile("~/.codex/config.toml");
+        }
+
+        /**
+         * Parse MCP servers from configuration file with specified path
+         */
+        private List<String> parseMcpServersFromConfigFile(String configPath) {
             List<String> serverNames = new ArrayList<>();
             try {
-                String configPath = "~/.codex/config.toml".replaceFirst("^~", System.getProperty("user.home"));
-                java.io.File configFile = new java.io.File(configPath);
+                String effectiveConfigPath = configPath.replaceFirst("^~", System.getProperty("user.home"));
+                java.io.File configFile = new java.io.File(effectiveConfigPath);
 
                 if (configFile.exists()) {
                     // Read the TOML file and extract MCP server names
@@ -512,6 +520,108 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
             }
 
             return serverNames;
+        }
+
+        /**
+         * Fill the selected MCP servers dropdown list
+         * This method is required by Jenkins when using f:select in Jelly files
+         */
+        public ListBoxModel doFillSelectedMcpServersItems(@QueryParameter String codexCliPath, @QueryParameter String configPath) {
+            ListBoxModel model = new ListBoxModel();
+
+            // Try to get MCP servers from Codex CLI if paths are provided
+            if (codexCliPath != null && !codexCliPath.trim().isEmpty() &&
+                configPath != null && !configPath.trim().isEmpty()) {
+                try {
+                    String effectiveCliPath = codexCliPath.trim().replaceFirst("^~", System.getProperty("user.home"));
+                    String effectiveConfigPath = configPath.trim().replaceFirst("^~", System.getProperty("user.home"));
+
+                    // Try to execute codex CLI to get MCP servers
+                    ProcessBuilder pb = new ProcessBuilder(effectiveCliPath, "mcp", "list", "--config", effectiveConfigPath);
+                    pb.redirectErrorStream(true);
+                    Process process = pb.start();
+
+                    // Read output
+                    java.io.BufferedReader reader = new java.io.BufferedReader(
+                        new java.io.InputStreamReader(process.getInputStream()));
+                    StringBuilder output = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        output.append(line).append("\n");
+                    }
+
+                    int exitCode = process.waitFor();
+                    if (exitCode == 0) {
+                        List<String> servers = parseMcpServersList(output.toString());
+                        if (!servers.isEmpty()) {
+                            for (String serverName : servers) {
+                                model.add(serverName);
+                            }
+                            return model;
+                        }
+                    }
+                } catch (Exception e) {
+                    // If CLI execution fails, fall through to config file parsing
+                }
+            }
+
+            // Fall back to parsing from config file
+            // Use provided configPath if available, otherwise use default
+            String effectiveConfigPath = (configPath != null && !configPath.trim().isEmpty())
+                ? configPath.trim().replaceFirst("^~", System.getProperty("user.home"))
+                : "~/.codex/config.toml".replaceFirst("^~", System.getProperty("user.home"));
+
+            List<String> servers = parseMcpServersFromConfigFile(effectiveConfigPath);
+            for (String serverName : servers) {
+                model.add(serverName);
+            }
+
+            return model;
+        }
+
+        /**
+         * Fill the default model dropdown list
+         * This method is required by Jenkins when using f:select in Jelly files
+         */
+        public ListBoxModel doFillDefaultModelItems() {
+            ListBoxModel model = new ListBoxModel();
+
+            // Try to get models from global plugin first (has caching)
+            try {
+                CodexAnalysisPlugin plugin = CodexAnalysisPlugin.get();
+                if (plugin != null) {
+                    List<String> models = plugin.getModelOptions();
+                    for (String modelName : models) {
+                        model.add(modelName);
+                    }
+                    if (!models.isEmpty()) {
+                        return model;
+                    }
+                }
+            } catch (Exception e) {
+                // If global plugin is not available, fall through to local method
+            }
+
+            // Fall back to local method or default models
+            String[] availableModels = getAvailableModels();
+            if (availableModels.length > 0) {
+                for (String modelName : availableModels) {
+                    model.add(modelName);
+                }
+            } else {
+                // If no models available, provide default options
+                model.add("kimi-k2");
+                model.add("gpt-4");
+                model.add("gpt-4-turbo");
+                model.add("gpt-3.5-turbo");
+                model.add("claude-3-opus");
+                model.add("claude-3-sonnet");
+                model.add("claude-3-haiku");
+                model.add("gemini-pro");
+                model.add("gemini-pro-vision");
+            }
+
+            return model;
         }
 
         /**
