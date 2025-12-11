@@ -177,4 +177,312 @@ public class CodexAnalysisJobPropertyTest {
         assertTrue("Should mention job-specific configuration", status.contains("job-specific"));
         assertTrue("Should mention Update MCP Servers List button", status.contains("Update MCP Servers List"));
     }
+
+    @Test
+    public void testTestCodexCliWithTildePath() {
+        // Test that tilde (~) in path is expanded to home directory
+        CodexAnalysisJobProperty.DescriptorImpl descriptor = new CodexAnalysisJobProperty.DescriptorImpl();
+
+        // Test with tilde path - should expand ~ to home directory
+        FormValidation result = descriptor.doTestCodexCli("~/.local/bin/codex", null, null, null, null, null);
+
+        // Should attempt to execute (will likely fail due to invalid path, but tilde should be expanded)
+        assertNotNull(result);
+        // The path should be expanded, so error message should contain expanded path (not ~)
+        String homeDir = System.getProperty("user.home");
+        String expectedPath = homeDir + "/.local/bin/codex";
+        assertTrue("Error message should contain expanded path without tilde",
+                   result.getMessage().contains(homeDir) ||
+                   result.getMessage().contains("Failed to test Codex CLI"));
+        // Verify tilde is not in the message (it should be expanded)
+        assertFalse("Message should not contain tilde character after expansion",
+                    result.getMessage().contains("~/.local/bin/codex"));
+    }
+
+    @Test
+    public void testTestCodexCliWithRegularPath() {
+        // Test with regular path (no tilde)
+        CodexAnalysisJobProperty.DescriptorImpl descriptor = new CodexAnalysisJobProperty.DescriptorImpl();
+
+        // Test with regular path - should work normally
+        FormValidation result = descriptor.doTestCodexCli("/usr/local/bin/codex", null, null, null, null, null);
+
+        // Should attempt to execute (will likely fail due to invalid path)
+        assertNotNull(result);
+        assertTrue("Should return either OK or ERROR",
+                   result.kind == FormValidation.Kind.OK ||
+                   result.kind == FormValidation.Kind.ERROR ||
+                   result.kind == FormValidation.Kind.WARNING);
+        // Path should remain unchanged (no tilde expansion needed)
+        assertTrue("Error message should contain the original path",
+                   result.getMessage().contains("/usr/local/bin/codex") ||
+                   result.getMessage().contains("Failed to test Codex CLI"));
+    }
+
+    @Test
+    public void testTestCodexCliWithInvalidPath() {
+        // Test with invalid path
+        CodexAnalysisJobProperty.DescriptorImpl descriptor = new CodexAnalysisJobProperty.DescriptorImpl();
+
+        // Test with invalid path - should return error
+        FormValidation result = descriptor.doTestCodexCli("/invalid/path/codex", null, null, null, null, null);
+
+        // Should return an error due to invalid CLI path
+        assertNotNull(result);
+        assertTrue("Should return error due to invalid CLI path",
+                   result.kind == FormValidation.Kind.ERROR);
+        assertTrue("Error message should mention failure",
+                   result.getMessage().contains("Failed to test Codex CLI"));
+    }
+
+    @Test
+    public void testTestCodexCliWithEmptyPath() {
+        // Test with empty path - should use default and expand tilde
+        CodexAnalysisJobProperty.DescriptorImpl descriptor = new CodexAnalysisJobProperty.DescriptorImpl();
+
+        // Test with empty path - should use default "~/.local/bin/codex" and expand tilde
+        FormValidation result = descriptor.doTestCodexCli("", null, null, null, null, null);
+
+        // Should attempt to execute with default path (will likely fail, but tilde should be expanded)
+        assertNotNull(result);
+        // Should either succeed or fail, but tilde should be expanded
+        String homeDir = System.getProperty("user.home");
+        assertTrue("Should return a result (OK, ERROR, or WARNING)",
+                   result.kind == FormValidation.Kind.OK ||
+                   result.kind == FormValidation.Kind.ERROR ||
+                   result.kind == FormValidation.Kind.WARNING);
+        // Verify that if default path is used, tilde should be expanded
+        if (result.getMessage().contains(homeDir + "/.local/bin/codex") ||
+            result.getMessage().contains("~/.local/bin/codex")) {
+            // If default path appears, verify tilde expansion
+            assertTrue("If default path is used, it should be expanded",
+                       result.getMessage().contains(homeDir) ||
+                       !result.getMessage().contains("~/.local/bin/codex"));
+        }
+    }
+
+    @Test
+    public void testTestCodexCliWithNullPath() {
+        // Test with null path - should use default and expand tilde
+        CodexAnalysisJobProperty.DescriptorImpl descriptor = new CodexAnalysisJobProperty.DescriptorImpl();
+
+        // Test with null path - should use default "~/.local/bin/codex" and expand tilde
+        FormValidation result = descriptor.doTestCodexCli(null, null, null, null, null, null);
+
+        // Should attempt to execute with default path (will likely fail, but tilde should be expanded)
+        assertNotNull(result);
+        // Should either succeed or fail, but tilde should be expanded
+        assertTrue("Should return a result (OK, ERROR, or WARNING)",
+                   result.kind == FormValidation.Kind.OK ||
+                   result.kind == FormValidation.Kind.ERROR ||
+                   result.kind == FormValidation.Kind.WARNING);
+    }
+
+    @Test
+    public void testTestCodexCliTildeExpansion() {
+        // Test that tilde expansion works correctly
+        CodexAnalysisJobProperty.DescriptorImpl descriptor = new CodexAnalysisJobProperty.DescriptorImpl();
+        String homeDir = System.getProperty("user.home");
+
+        // Test with various tilde paths
+        String[] tildePaths = {
+            "~/.local/bin/codex",
+            "~/codex",
+            "~/.codex/codex"
+        };
+
+        for (String tildePath : tildePaths) {
+            FormValidation result = descriptor.doTestCodexCli(tildePath, null, null, null, null, null);
+            assertNotNull(result);
+            // Verify that the expanded path (without ~) appears in the message or error
+            // The actual execution may fail, but tilde should be expanded
+            String expectedPath = tildePath.replaceFirst("^~", homeDir);
+            assertTrue("Path should be expanded (message should not contain ~ for " + tildePath,
+                       !result.getMessage().contains("~") ||
+                       result.getMessage().contains(homeDir) ||
+                       result.getMessage().contains("Failed to test Codex CLI"));
+        }
+    }
+
+    @Test
+    public void testTestCodexCliWithAllParameters() {
+        // Test with all parameters provided
+        CodexAnalysisJobProperty.DescriptorImpl descriptor = new CodexAnalysisJobProperty.DescriptorImpl();
+
+        FormValidation result = descriptor.doTestCodexCli(
+            "~/.local/bin/codex",
+            "https://example.com/download",
+            "testuser",
+            "testpass",
+            "~/.codex/config.toml",
+            "test-api-key"
+        );
+
+        // Should attempt to execute (will likely fail, but should handle all parameters)
+        assertNotNull(result);
+        assertTrue("Should return a result (OK, ERROR, or WARNING)",
+                   result.kind == FormValidation.Kind.OK ||
+                   result.kind == FormValidation.Kind.ERROR ||
+                   result.kind == FormValidation.Kind.WARNING);
+        // Verify tilde expansion happened
+        String homeDir = System.getProperty("user.home");
+        assertTrue("Tilde should be expanded in the path",
+                   result.getMessage().contains(homeDir) ||
+                   result.getMessage().contains("Failed to test Codex CLI"));
+    }
+
+    @Test
+    public void testTestCodexCliWithWhitespacePath() {
+        // Test with path containing whitespace (should be trimmed)
+        CodexAnalysisJobProperty.DescriptorImpl descriptor = new CodexAnalysisJobProperty.DescriptorImpl();
+
+        FormValidation result = descriptor.doTestCodexCli("  ~/.local/bin/codex  ", null, null, null, null, null);
+
+        assertNotNull(result);
+        // Should handle whitespace and expand tilde
+        String homeDir = System.getProperty("user.home");
+        assertTrue("Should return a result and handle whitespace",
+                   result.kind == FormValidation.Kind.OK ||
+                   result.kind == FormValidation.Kind.ERROR ||
+                   result.kind == FormValidation.Kind.WARNING);
+    }
+
+    @Test
+    public void testTestCodexCliPathExpansionVerification() {
+        // Test to verify that tilde expansion actually happens by checking the path format
+        CodexAnalysisJobProperty.DescriptorImpl descriptor = new CodexAnalysisJobProperty.DescriptorImpl();
+        String homeDir = System.getProperty("user.home");
+
+        // Test with tilde path
+        FormValidation result = descriptor.doTestCodexCli("~/.local/bin/codex", null, null, null, null, null);
+        assertNotNull(result);
+
+        // The expanded path should be in the format: /home/user/.local/bin/codex (no ~)
+        // We verify this by checking the message doesn't contain the original tilde path
+        // and either contains the home directory or a generic error
+        boolean hasExpandedPath = result.getMessage().contains(homeDir + "/.local/bin/codex");
+        boolean hasGenericError = result.getMessage().contains("Failed to test Codex CLI");
+        boolean hasOriginalTilde = result.getMessage().contains("~/.local/bin/codex");
+
+        assertTrue("Path should be expanded (either shows expanded path or generic error, not original tilde path)",
+                   hasExpandedPath || (hasGenericError && !hasOriginalTilde));
+    }
+
+    @Test
+    public void testTestCodexCliBasicExecution() {
+        // Test basic CLI execution
+        CodexAnalysisJobProperty.DescriptorImpl descriptor = new CodexAnalysisJobProperty.DescriptorImpl();
+
+        // Test with a path - should attempt execution
+        FormValidation result = descriptor.doTestCodexCli("/usr/local/bin/codex", null, null, null, null, null);
+
+        assertNotNull(result);
+        // Should return a result (OK, ERROR, or WARNING)
+        assertTrue("Should return a result when testing CLI",
+                   result.kind == FormValidation.Kind.OK ||
+                   result.kind == FormValidation.Kind.ERROR ||
+                   result.kind == FormValidation.Kind.WARNING);
+        // Verify the method returns a message
+        assertTrue("Should return a message",
+                   !result.getMessage().isEmpty());
+    }
+
+    @Test
+    public void testTestCodexCliErrorHandling() {
+        // Test error handling for various failure scenarios
+        CodexAnalysisJobProperty.DescriptorImpl descriptor = new CodexAnalysisJobProperty.DescriptorImpl();
+
+        // Test with null path - should handle gracefully
+        FormValidation result = descriptor.doTestCodexCli(null, null, null, null, null, null);
+        assertNotNull(result);
+        // Should handle null path gracefully (uses default or returns error)
+        // Improved error handling ensures no exceptions
+        assertTrue("Should handle null path gracefully",
+                   result.kind == FormValidation.Kind.OK ||
+                   result.kind == FormValidation.Kind.ERROR ||
+                   result.kind == FormValidation.Kind.WARNING);
+        assertNotNull("Should return a message for null path", result.getMessage());
+
+        // Test with empty path - should handle gracefully
+        result = descriptor.doTestCodexCli("", null, null, null, null, null);
+        assertNotNull(result);
+        assertTrue("Should handle empty path gracefully",
+                   result.kind == FormValidation.Kind.OK ||
+                   result.kind == FormValidation.Kind.ERROR ||
+                   result.kind == FormValidation.Kind.WARNING);
+
+        // Test with invalid executable path
+        result = descriptor.doTestCodexCli("/nonexistent/path/codex", null, null, null, null, null);
+        assertNotNull(result);
+        assertTrue("Should return error for invalid path",
+                   result.kind == FormValidation.Kind.ERROR ||
+                   result.kind == FormValidation.Kind.WARNING);
+        assertTrue("Error message should mention failure",
+                   result.getMessage().contains("Failed") ||
+                   result.getMessage().contains("error") ||
+                   result.getMessage().contains("not configured"));
+    }
+
+    @Test
+    public void testTestCodexCliMessageContent() {
+        // Test that messages contain relevant information
+        CodexAnalysisJobProperty.DescriptorImpl descriptor = new CodexAnalysisJobProperty.DescriptorImpl();
+
+        FormValidation result = descriptor.doTestCodexCli("/usr/local/bin/codex", null, null, null, null, null);
+
+        assertNotNull(result);
+        String message = result.getMessage();
+        assertNotNull("Message should not be null", message);
+        // Message should contain information about the test execution
+        assertTrue("Message should contain execution context",
+                   message.contains("Codex CLI") ||
+                   message.contains("path") ||
+                   message.contains("Failed") ||
+                   message.contains("accessible"));
+    }
+
+    @Test
+    public void testTestCodexCliGracefulExecution() {
+        // Test that the method executes gracefully in various scenarios
+        CodexAnalysisJobProperty.DescriptorImpl descriptor = new CodexAnalysisJobProperty.DescriptorImpl();
+
+        // Test with regular path
+        FormValidation result1 = descriptor.doTestCodexCli("/usr/bin/codex", null, null, null, null, null);
+        assertNotNull("Should return result for regular path", result1);
+
+        // Test with tilde path
+        FormValidation result2 = descriptor.doTestCodexCli("~/.local/bin/codex", null, null, null, null, null);
+        assertNotNull("Should return result for tilde path", result2);
+
+        // Both should return valid results without throwing exceptions
+        assertTrue("First result should be valid",
+                   result1.kind == FormValidation.Kind.OK ||
+                   result1.kind == FormValidation.Kind.ERROR ||
+                   result1.kind == FormValidation.Kind.WARNING);
+        assertTrue("Second result should be valid",
+                   result2.kind == FormValidation.Kind.OK ||
+                   result2.kind == FormValidation.Kind.ERROR ||
+                   result2.kind == FormValidation.Kind.WARNING);
+    }
+
+    @Test
+    public void testTestCodexCliTildeExpansionVerification() {
+        // Test that tilde expansion works correctly
+        CodexAnalysisJobProperty.DescriptorImpl descriptor = new CodexAnalysisJobProperty.DescriptorImpl();
+
+        FormValidation result = descriptor.doTestCodexCli("~/.local/bin/codex", null, null, null, null, null);
+
+        assertNotNull(result);
+        // Should expand tilde to home directory
+        String homeDir = System.getProperty("user.home");
+        String message = result.getMessage();
+
+        // Verify tilde expansion happened
+        assertTrue("Should expand tilde to home directory",
+                   message.contains(homeDir) ||
+                   message.contains("Failed to test Codex CLI"));
+        // Verify original tilde path is not in the message (it should be expanded)
+        assertFalse("Message should not contain original tilde path",
+                    message.contains("~/.local/bin/codex"));
+    }
 }

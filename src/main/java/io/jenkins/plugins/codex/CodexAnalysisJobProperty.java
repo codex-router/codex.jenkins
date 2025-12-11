@@ -1,17 +1,25 @@
 package io.jenkins.plugins.codex;
 
 import hudson.Extension;
+import hudson.FilePath;
+import hudson.Launcher;
 import hudson.model.Job;
 import hudson.model.JobProperty;
 import hudson.model.JobPropertyDescriptor;
+import hudson.model.Label;
+import hudson.model.Node;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import hudson.util.ArgumentListBuilder;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.Stapler;
 import org.kohsuke.stapler.StaplerRequest;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -785,6 +793,13 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
                     effectiveLitellmApiKey = litellmApiKey;
                 }
 
+                if (effectiveCliPath == null || effectiveCliPath.trim().isEmpty()) {
+                    return FormValidation.error("Codex CLI path is not configured");
+                }
+
+                // Expand ~ to home directory for Ubuntu/Unix systems
+                effectiveCliPath = effectiveCliPath.replaceFirst("^~", System.getProperty("user.home"));
+
                 // Test CLI availability using a simple version check
                 // This will test the CLI on the node where the job will run
                 ProcessBuilder pb = new ProcessBuilder(effectiveCliPath, "--version");
@@ -859,13 +874,37 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
          */
         private CodexAnalysisJobProperty getCurrentJobProperty() {
             try {
-                // Try to get the job property from the current request context
-                // This is a simplified approach - in a real Jenkins plugin, you'd use
-                // StaplerRequest.getCurrentRequest() and navigate to the job context
-                return null; // For now, return null to use global configuration
+                StaplerRequest req = Stapler.getCurrentRequest();
+                if (req != null) {
+                    // Navigate to the job from the request
+                    // The URL pattern is typically /job/JobName/configure
+                    Object job = req.findAncestor(Job.class);
+                    if (job instanceof Job) {
+                        return ((Job<?, ?>) job).getProperty(CodexAnalysisJobProperty.class);
+                    }
+                }
             } catch (Exception e) {
-                return null;
+                // Ignore and return null
             }
+            return null;
+        }
+
+        /**
+         * Helper method to get the current job from the request context
+         */
+        private Job<?, ?> getCurrentJob() {
+            try {
+                StaplerRequest req = Stapler.getCurrentRequest();
+                if (req != null) {
+                    Object job = req.findAncestor(Job.class);
+                    if (job instanceof Job) {
+                        return (Job<?, ?>) job;
+                    }
+                }
+            } catch (Exception e) {
+                // Ignore and return null
+            }
+            return null;
         }
     }
 }
