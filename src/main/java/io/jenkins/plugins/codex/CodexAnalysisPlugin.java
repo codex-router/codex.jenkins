@@ -360,11 +360,7 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
             }
         }
 
-        // If no models found, return default list
-        if (models.isEmpty()) {
-            models.addAll(getDefaultModelOptions());
-        }
-
+        // If no models found, return empty list (no default models)
         return models;
     }
 
@@ -392,8 +388,8 @@ public class CodexAnalysisPlugin extends GlobalConfiguration {
         // Check if cache is valid
         long currentTime = System.currentTimeMillis();
         if (cachedModels.isEmpty() || (currentTime - modelCacheTimestamp) > MODEL_CACHE_DURATION) {
-            // Return default models if cache is empty or expired
-            return getDefaultModelOptions();
+            // Return empty list if cache is empty or expired (no default models)
+            return new ArrayList<>();
         }
         return new ArrayList<>(cachedModels);
     }

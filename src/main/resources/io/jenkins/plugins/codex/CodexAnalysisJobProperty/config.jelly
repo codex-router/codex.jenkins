@@ -44,7 +44,7 @@
             </f:entry>
 
             <f:entry title="MCP Servers" field="selectedMcpServers" description="Select MCP servers from those configured in ~/.codex/config.toml. Only shown when 'Enable MCP Servers' is checked.">
-                <f:select multiple="true" />
+                <f:select multiple="true" size="1" />
                 <f:validateButton title="Update MCP Servers List" progress="Fetching available MCP servers from Codex CLI..."
                                  method="fetchAvailableMcpServers" with="codexCliPath,configPath" />
                 <div style="margin-top: 5px; font-size: 11px; color: #666;">

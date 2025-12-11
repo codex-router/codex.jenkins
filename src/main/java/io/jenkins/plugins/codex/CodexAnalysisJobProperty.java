@@ -601,14 +601,7 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
                 // This is not critical as the user can still configure manually
             }
 
-            // If no servers found in config file, provide some common examples
-            if (serverNames.isEmpty()) {
-                serverNames.add("filesystem");
-                serverNames.add("github");
-                serverNames.add("database");
-                serverNames.add("web-search");
-            }
-
+            // Return empty list if no servers found (no default examples)
             return serverNames;
         }
 
@@ -618,6 +611,9 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
          */
         public ListBoxModel doFillSelectedMcpServersItems(@QueryParameter String codexCliPath, @QueryParameter String configPath) {
             ListBoxModel model = new ListBoxModel();
+
+            // Add empty option as default
+            model.add("");
 
             // Try to get MCP servers from Codex CLI if paths are provided
             if (codexCliPath != null && !codexCliPath.trim().isEmpty() &&
@@ -676,6 +672,9 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
         public ListBoxModel doFillDefaultModelItems() {
             ListBoxModel model = new ListBoxModel();
 
+            // Add empty option as default
+            model.add("");
+
             // Try to get models from global plugin first (has caching)
             try {
                 CodexAnalysisPlugin plugin = CodexAnalysisPlugin.get();
@@ -692,23 +691,12 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
                 // If global plugin is not available, fall through to local method
             }
 
-            // Fall back to local method or default models
+            // Fall back to local method
             String[] availableModels = getAvailableModels();
             if (availableModels.length > 0) {
                 for (String modelName : availableModels) {
                     model.add(modelName);
                 }
-            } else {
-                // If no models available, provide default options
-                model.add("kimi-k2");
-                model.add("gpt-4");
-                model.add("gpt-4-turbo");
-                model.add("gpt-3.5-turbo");
-                model.add("claude-3-opus");
-                model.add("claude-3-sonnet");
-                model.add("claude-3-haiku");
-                model.add("gemini-pro");
-                model.add("gemini-pro-vision");
             }
 
             return model;

@@ -75,12 +75,14 @@ You can also configure Codex settings per job by adding the **Codex Analysis Plu
    - **Codex CLI Download Password**: Override the global CLI download password for this job
    - **Manual CLI Update**: Use the "Update CLI" button to manually download and update Codex CLI from the download URL (job-level only)
    - **Config Path**: Override the global config path for this job
-   - **Default Model**: Configure the default model for this job (no default - must be selected from available models)
+   - **Default Model**: Configure the default model for this job (dropdown is empty by default - must click "Update Model List" to populate)
      - Use the "Update Model List" button to fetch available models from Codex CLI
      - Model list is populated dynamically from Codex CLI - no hardcoded models
+     - Dropdown starts empty and only shows models after fetching from CLI
    - **Timeout**: Override the global timeout for this job
    - **Enable MCP Servers**: Enable Model Context Protocol servers for this job (default: disabled)
    - **MCP Servers**: Select MCP servers for this job (only shown when 'Enable MCP Servers' is checked)
+     - Dropdown is empty by default - must click "Update MCP Servers List" to populate
      - Use the "Update MCP Servers List" button to fetch available servers from Codex CLI
      - MCP servers configuration is job-specific
    - **LiteLLM API Key**: Override the global LiteLLM API key for this job (default: empty)
@@ -102,7 +104,7 @@ The plugin supports Model Context Protocol (MCP) servers for enhanced analysis c
 1. **Configuration Detection**: The plugin reads `~/.codex/config.toml` and extracts MCP server names
 2. **Server Selection**: Users can select which servers to enable from a dropdown list
 3. **Multi-Selection**: Multiple servers can be selected for combined functionality
-4. **Fallback Support**: If no servers are found, common examples are provided
+4. **Empty by Default**: The dropdown starts empty - use "Update MCP Servers List" to populate it
 5. **Dynamic Updates**: Use the "Update MCP Servers List" button to refresh the server list from Codex CLI
 
 #### MCP Server Types
@@ -575,6 +577,7 @@ For jobs that need specific Codex CLI configurations:
    - Check node-specific PATH and environment variables
 
 5. **MCP Servers not available**
+   - **Expected Behavior**: The dropdown is empty by default - this is normal. You must click "Update MCP Servers List" to populate it.
    - Ensure MCP servers are properly configured in `~/.codex/config.toml`
    - Use the "Update MCP Servers List" button to refresh the server list from Codex CLI
    - Check that the config file path is correct and accessible
@@ -588,12 +591,13 @@ For jobs that need specific Codex CLI configurations:
    - Model list is cached for 5 minutes - wait for cache expiration or restart Jenkins
 
 7. **No models available in dropdown**
+   - **Expected Behavior**: The dropdown is empty by default - this is normal. You must click "Update Model List" to populate it.
    - **CLI-Only Approach**: The plugin fetches models exclusively from Codex CLI - no hardcoded models are provided
    - Ensure Codex CLI is properly installed and accessible
    - Use the "Update Model List" button to fetch models from CLI
    - Check that `codex models list` command works in your terminal
    - Verify API keys are configured in Codex CLI
-   - If no models appear, the CLI may not be properly configured or accessible
+   - If no models appear after clicking "Update Model List", the CLI may not be properly configured or accessible
 
 8. **Model validation warnings**
    - Model validation shows warnings when no models are available from CLI
