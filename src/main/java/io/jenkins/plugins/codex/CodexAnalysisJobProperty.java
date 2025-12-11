@@ -394,63 +394,141 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
         }
 
         /**
-         * Fetch available models from Codex CLI (delegates to global configuration)
+         * Fetch available models from Codex CLI with node binding
+         * This method fetches models from the CLI on the node where the job will run
          */
-        public FormValidation doFetchAvailableModels(@QueryParameter String codexCliPath) {
+        @POST
+        public FormValidation doFetchAvailableModels(@AncestorInPath Job<?, ?> job, @QueryParameter String codexCliPath) {
             try {
-                CodexAnalysisPlugin plugin = CodexAnalysisPlugin.get();
-                if (plugin != null) {
-                    return plugin.doFetchAvailableModels(codexCliPath);
+                Jenkins j = Jenkins.get();
+                Node target = null;
+                String path = Util.fixEmptyAndTrim(codexCliPath);
+
+                // Only try labeled agents for freestyle projects
+                if (job != null && job instanceof AbstractProject) {
+                    AbstractProject<?, ?> project = (AbstractProject<?, ?>) job;
+                    Label assigned = project.getAssignedLabel();
+                    if (assigned != null) {
+                        for (Node n : assigned.getNodes()) {
+                            if (n != null && n.toComputer() != null && n.toComputer().isOnline()) {
+                                target = n;
+                                break;
+                            }
+                        }
+                        if (target == null) {
+                            return FormValidation.error("No online agents match the job's label: '" + assigned.getExpression() + "'.");
+                        }
+                    }
                 }
-            } catch (IllegalStateException e) {
-                // Jenkins instance not available (e.g., in test environment)
-                return FormValidation.error("Global Codex Analysis Plugin configuration not found - Jenkins instance not available");
+
+                // For pipeline jobs or freestyle jobs without labels, use controller
+                if (target == null) {
+                    target = j; // fallback to controller
+                }
+
+                // If job-level path is not provided, use global configuration
+                if (path == null) {
+                    CodexAnalysisJobProperty jobProperty = job != null ? job.getProperty(CodexAnalysisJobProperty.class) : null;
+                    if (jobProperty != null) {
+                        path = Util.fixEmptyAndTrim(jobProperty.getEffectiveCodexCliPath());
+                    }
+                    if (path == null) {
+                        CodexAnalysisPlugin cfg = CodexAnalysisPlugin.get();
+                        String globalPath = (cfg != null) ? Util.fixEmptyAndTrim(cfg.getCodexCliPath()) : null;
+                        path = (globalPath != null) ? globalPath : "~/.local/bin/codex";
+                    }
+                }
+
+                FilePath root = target.getRootPath();
+                if (root == null) {
+                    return FormValidation.error("Unable to access workspace on target node.");
+                }
+
+                String output = root.act(new ModelsListCallable(path));
+                List<String> models = parseModelList(output);
+                if (!models.isEmpty()) {
+                    String where = (target == j) ? "controller" : target.getNodeName();
+                    return FormValidation.ok("Successfully fetched " + models.size() + " models from Codex CLI on " + where);
+                } else {
+                    return FormValidation.warning("No models found in Codex CLI output");
+                }
+            } catch (Exception e) {
+                return FormValidation.error("Failed to fetch models from Codex CLI: " + e.getMessage());
             }
-            return FormValidation.error("Global Codex Analysis Plugin configuration not found");
         }
 
         /**
-         * Fetch available MCP servers from Codex CLI (job-level only)
+         * Fetch available MCP servers from Codex CLI with node binding
+         * This method fetches MCP servers from the CLI on the node where the job will run
          */
-        public FormValidation doFetchAvailableMcpServers(@QueryParameter String codexCliPath, @QueryParameter String configPath) {
+        @POST
+        public FormValidation doFetchAvailableMcpServers(@AncestorInPath Job<?, ?> job, @QueryParameter String codexCliPath, @QueryParameter String configPath) {
             try {
-                String effectiveCliPath = codexCliPath != null && !codexCliPath.trim().isEmpty()
-                    ? codexCliPath.trim()
-                    : "~/.local/bin/codex";
+                Jenkins j = Jenkins.get();
+                Node target = null;
+                String path = Util.fixEmptyAndTrim(codexCliPath);
+                String cfgPath = Util.fixEmptyAndTrim(configPath);
 
-                String effectiveConfigPath = configPath != null && !configPath.trim().isEmpty()
-                    ? configPath.trim()
-                    : "~/.codex/config.toml";
-
-                // Expand ~ to home directory
-                effectiveCliPath = effectiveCliPath.replaceFirst("^~", System.getProperty("user.home"));
-                effectiveConfigPath = effectiveConfigPath.replaceFirst("^~", System.getProperty("user.home"));
-
-                // Execute codex CLI to get MCP servers information
-                ProcessBuilder pb = new ProcessBuilder(effectiveCliPath, "mcp", "list", "--config", effectiveConfigPath);
-                pb.redirectErrorStream(true);
-                Process process = pb.start();
-
-                // Read output
-                java.io.BufferedReader reader = new java.io.BufferedReader(
-                    new java.io.InputStreamReader(process.getInputStream()));
-                StringBuilder output = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    output.append(line).append("\n");
+                // Only try labeled agents for freestyle projects
+                if (job != null && job instanceof AbstractProject) {
+                    AbstractProject<?, ?> project = (AbstractProject<?, ?>) job;
+                    Label assigned = project.getAssignedLabel();
+                    if (assigned != null) {
+                        for (Node n : assigned.getNodes()) {
+                            if (n != null && n.toComputer() != null && n.toComputer().isOnline()) {
+                                target = n;
+                                break;
+                            }
+                        }
+                        if (target == null) {
+                            return FormValidation.error("No online agents match the job's label: '" + assigned.getExpression() + "'.");
+                        }
+                    }
                 }
 
-                int exitCode = process.waitFor();
-                if (exitCode == 0) {
-                    // Parse the output to extract MCP server names
-                    List<String> servers = parseMcpServersList(output.toString());
-                    if (!servers.isEmpty()) {
-                        return FormValidation.ok("Successfully fetched " + servers.size() + " MCP servers from Codex CLI");
-                    } else {
-                        return FormValidation.warning("No MCP servers found in Codex CLI output");
+                // For pipeline jobs or freestyle jobs without labels, use controller
+                if (target == null) {
+                    target = j; // fallback to controller
+                }
+
+                // If job-level path is not provided, use global configuration
+                if (path == null) {
+                    CodexAnalysisJobProperty jobProperty = job != null ? job.getProperty(CodexAnalysisJobProperty.class) : null;
+                    if (jobProperty != null) {
+                        path = Util.fixEmptyAndTrim(jobProperty.getEffectiveCodexCliPath());
                     }
+                    if (path == null) {
+                        CodexAnalysisPlugin cfg = CodexAnalysisPlugin.get();
+                        String globalPath = (cfg != null) ? Util.fixEmptyAndTrim(cfg.getCodexCliPath()) : null;
+                        path = (globalPath != null) ? globalPath : "~/.local/bin/codex";
+                    }
+                }
+
+                // If config path is not provided, use job or global configuration
+                if (cfgPath == null) {
+                    CodexAnalysisJobProperty jobProperty = job != null ? job.getProperty(CodexAnalysisJobProperty.class) : null;
+                    if (jobProperty != null) {
+                        cfgPath = Util.fixEmptyAndTrim(jobProperty.getEffectiveConfigPath());
+                    }
+                    if (cfgPath == null) {
+                        CodexAnalysisPlugin cfg = CodexAnalysisPlugin.get();
+                        String globalConfigPath = (cfg != null) ? Util.fixEmptyAndTrim(cfg.getConfigPath()) : null;
+                        cfgPath = (globalConfigPath != null) ? globalConfigPath : "~/.codex/config.toml";
+                    }
+                }
+
+                FilePath root = target.getRootPath();
+                if (root == null) {
+                    return FormValidation.error("Unable to access workspace on target node.");
+                }
+
+                String output = root.act(new McpServersListCallable(path, cfgPath));
+                List<String> servers = parseMcpServersList(output);
+                if (!servers.isEmpty()) {
+                    String where = (target == j) ? "controller" : target.getNodeName();
+                    return FormValidation.ok("Successfully fetched " + servers.size() + " MCP servers from Codex CLI on " + where);
                 } else {
-                    return FormValidation.error("Codex CLI returned exit code: " + exitCode + ". Output: " + output.toString());
+                    return FormValidation.warning("No MCP servers found in Codex CLI output");
                 }
             } catch (Exception e) {
                 return FormValidation.error("Failed to fetch MCP servers from Codex CLI: " + e.getMessage());
@@ -704,16 +782,20 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
         }
 
         /**
-         * Manually update Codex CLI from download URL
-         * This method downloads and updates the CLI in the context of the specific job/node
+         * Manually update Codex CLI from download URL with node binding
+         * This method downloads and updates the CLI on the node where the job will run
          */
-        public FormValidation doUpdateCodexCli(@QueryParameter("codexCliPath") String codexCliPath,
+        @POST
+        public FormValidation doUpdateCodexCli(@AncestorInPath Job<?, ?> job, @QueryParameter("codexCliPath") String codexCliPath,
                                              @QueryParameter("codexCliDownloadUrl") String codexCliDownloadUrl,
                                              @QueryParameter("codexCliDownloadUsername") String codexCliDownloadUsername,
                                              @QueryParameter("codexCliDownloadPassword") String codexCliDownloadPassword) {
             try {
-                // Get the current job property from the request context
-                CodexAnalysisJobProperty jobProperty = getCurrentJobProperty();
+                Jenkins j = Jenkins.get();
+                Node target = null;
+
+                // Get the current job property from the job parameter
+                CodexAnalysisJobProperty jobProperty = job != null ? job.getProperty(CodexAnalysisJobProperty.class) : null;
 
                 // Use effective values from job configuration
                 String effectiveCliPath = jobProperty != null ? jobProperty.getEffectiveCodexCliPath() : "~/.local/bin/codex";
@@ -740,12 +822,53 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
                     return FormValidation.error("Codex CLI Download URL is required for updating CLI. Please configure the download URL to use this feature.");
                 }
 
-                // Perform the download and update
-                boolean success = downloadAndUpdateCli(effectiveCliDownloadUrl, effectiveCliDownloadUsername,
-                                                     effectiveCliDownloadPassword, effectiveCliPath);
+                // Only try labeled agents for freestyle projects
+                if (job != null && job instanceof AbstractProject) {
+                    AbstractProject<?, ?> project = (AbstractProject<?, ?>) job;
+                    Label assigned = project.getAssignedLabel();
+                    if (assigned != null) {
+                        for (Node n : assigned.getNodes()) {
+                            if (n != null && n.toComputer() != null && n.toComputer().isOnline()) {
+                                target = n;
+                                break;
+                            }
+                        }
+                        if (target == null) {
+                            return FormValidation.error("No online agents match the job's label: '" + assigned.getExpression() + "'.");
+                        }
+                    }
+                }
+
+                // For pipeline jobs or freestyle jobs without labels, use controller
+                if (target == null) {
+                    target = j; // fallback to controller
+                }
+
+                // If job-level path is not provided, use global configuration
+                String path = Util.fixEmptyAndTrim(effectiveCliPath);
+                if (path == null) {
+                    if (jobProperty != null) {
+                        path = Util.fixEmptyAndTrim(jobProperty.getEffectiveCodexCliPath());
+                    }
+                    if (path == null) {
+                        CodexAnalysisPlugin cfg = CodexAnalysisPlugin.get();
+                        String globalPath = (cfg != null) ? Util.fixEmptyAndTrim(cfg.getCodexCliPath()) : null;
+                        path = (globalPath != null) ? globalPath : "~/.local/bin/codex";
+                    }
+                }
+
+                FilePath root = target.getRootPath();
+                if (root == null) {
+                    return FormValidation.error("Unable to access workspace on target node.");
+                }
+
+                // Perform the download and update on the target node
+                boolean success = root.act(new DownloadCliCallable(effectiveCliDownloadUrl, effectiveCliDownloadUsername,
+                                                                   effectiveCliDownloadPassword, path));
 
                 if (success) {
-                    return FormValidation.ok("Codex CLI successfully updated from: " + effectiveCliDownloadUrl);
+                    String where = (target == j) ? "controller" : target.getNodeName();
+                    return FormValidation.ok("Codex CLI successfully updated from: " + effectiveCliDownloadUrl + " on " + where);
                 } else {
                     return FormValidation.error("Failed to update Codex CLI from: " + effectiveCliDownloadUrl);
                 }
@@ -868,50 +991,212 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
             }
         }
 
-        /**
-         * Download and update Codex CLI from the specified URL with authentication
-         */
-        private boolean downloadAndUpdateCli(String downloadUrl, String username, String password, String cliPath) {
-            try {
-                // Create HTTP connection with authentication if provided
-                java.net.URL url = new java.net.URL(downloadUrl);
-                java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
+        // Callable executed on a remote node to get Codex CLI models list
+        private static class ModelsListCallable implements FilePath.FileCallable<String> {
+            private final String rawPath;
 
-                // Set authentication if username and password are provided
-                if (username != null && !username.trim().isEmpty() &&
-                    password != null && !password.trim().isEmpty()) {
-                    String auth = username + ":" + password;
-                    String encodedAuth = java.util.Base64.getEncoder().encodeToString(auth.getBytes());
-                    connection.setRequestProperty("Authorization", "Basic " + encodedAuth);
+            ModelsListCallable(String rawPath) {
+                this.rawPath = rawPath;
+            }
+
+            @Override
+            public String invoke(java.io.File f, hudson.remoting.VirtualChannel channel) throws java.io.IOException, InterruptedException {
+                String path = rawPath;
+                if (path == null || path.isEmpty()) {
+                    path = "codex";
+                }
+                // Expand leading ~ on the agent
+                if (path.startsWith("~/")) {
+                    String home = System.getProperty("user.home");
+                    if (home != null && !home.isEmpty()) {
+                        path = home + path.substring(1);
+                    }
                 }
 
-                connection.setRequestMethod("GET");
-                connection.setConnectTimeout(30000); // 30 seconds timeout
-                connection.setReadTimeout(60000); // 60 seconds timeout
+                java.lang.ProcessBuilder pb = new java.lang.ProcessBuilder(path, "models", "list");
+                java.lang.Process proc = pb.start();
+                java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                try (java.io.InputStream is = proc.getInputStream()) {
+                    byte[] buf = new byte[4096];
+                    int r;
+                    while ((r = is.read(buf)) >= 0) {
+                        baos.write(buf, 0, r);
+                    }
+                }
+                int code = proc.waitFor();
+                if (code != 0) {
+                    // Try to capture stderr for better diagnostics
+                    java.io.ByteArrayOutputStream err = new java.io.ByteArrayOutputStream();
+                    try (java.io.InputStream es = proc.getErrorStream()) {
+                        byte[] buf = new byte[4096];
+                        int r;
+                        while ((r = es.read(buf)) >= 0) {
+                            err.write(buf, 0, r);
+                        }
+                    }
+                    throw new java.io.IOException("Codex CLI models list failed with exit code " + code + ": " + err.toString(java.nio.charset.StandardCharsets.UTF_8));
+                }
+                return baos.toString(java.nio.charset.StandardCharsets.UTF_8);
+            }
 
-                int responseCode = connection.getResponseCode();
-                if (responseCode == 200) {
-                    // Download the file
-                    try (java.io.InputStream inputStream = connection.getInputStream();
-                         java.io.FileOutputStream outputStream = new java.io.FileOutputStream(cliPath)) {
+            @Override
+            public void checkRoles(org.jenkinsci.remoting.RoleChecker checker) throws SecurityException {
+                // Accept default; no special roles required
+            }
+        }
 
-                        byte[] buffer = new byte[4096];
-                        int bytesRead;
-                        while ((bytesRead = inputStream.read(buffer)) != -1) {
-                            outputStream.write(buffer, 0, bytesRead);
+        // Callable executed on a remote node to get Codex CLI MCP servers list
+        private static class McpServersListCallable implements FilePath.FileCallable<String> {
+            private final String rawPath;
+            private final String rawConfigPath;
+
+            McpServersListCallable(String rawPath, String rawConfigPath) {
+                this.rawPath = rawPath;
+                this.rawConfigPath = rawConfigPath;
+            }
+
+            @Override
+            public String invoke(java.io.File f, hudson.remoting.VirtualChannel channel) throws java.io.IOException, InterruptedException {
+                String path = rawPath;
+                if (path == null || path.isEmpty()) {
+                    path = "codex";
+                }
+                // Expand leading ~ on the agent
+                if (path.startsWith("~/")) {
+                    String home = System.getProperty("user.home");
+                    if (home != null && !home.isEmpty()) {
+                        path = home + path.substring(1);
+                    }
+                }
+
+                String configPath = rawConfigPath;
+                if (configPath != null && !configPath.isEmpty()) {
+                    // Expand leading ~ on the agent
+                    if (configPath.startsWith("~/")) {
+                        String home = System.getProperty("user.home");
+                        if (home != null && !home.isEmpty()) {
+                            configPath = home + configPath.substring(1);
+                        }
+                    }
+                }
+
+                java.lang.ProcessBuilder pb;
+                if (configPath != null && !configPath.isEmpty()) {
+                    pb = new java.lang.ProcessBuilder(path, "mcp", "list", "--config", configPath);
+                } else {
+                    pb = new java.lang.ProcessBuilder(path, "mcp", "list");
+                }
+                java.lang.Process proc = pb.start();
+                java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                try (java.io.InputStream is = proc.getInputStream()) {
+                    byte[] buf = new byte[4096];
+                    int r;
+                    while ((r = is.read(buf)) >= 0) {
+                        baos.write(buf, 0, r);
+                    }
+                }
+                int code = proc.waitFor();
+                if (code != 0) {
+                    // Try to capture stderr for better diagnostics
+                    java.io.ByteArrayOutputStream err = new java.io.ByteArrayOutputStream();
+                    try (java.io.InputStream es = proc.getErrorStream()) {
+                        byte[] buf = new byte[4096];
+                        int r;
+                        while ((r = es.read(buf)) >= 0) {
+                            err.write(buf, 0, r);
+                        }
+                    }
+                    throw new java.io.IOException("Codex CLI mcp list failed with exit code " + code + ": " + err.toString(java.nio.charset.StandardCharsets.UTF_8));
+                }
+                return baos.toString(java.nio.charset.StandardCharsets.UTF_8);
+            }
+
+            @Override
+            public void checkRoles(org.jenkinsci.remoting.RoleChecker checker) throws SecurityException {
+                // Accept default; no special roles required
+            }
+        }
+
+        // Callable executed on a remote node to download and update Codex CLI
+        private static class DownloadCliCallable implements FilePath.FileCallable<Boolean> {
+            private final String downloadUrl;
+            private final String username;
+            private final String password;
+            private final String rawPath;
+
+            DownloadCliCallable(String downloadUrl, String username, String password, String rawPath) {
+                this.downloadUrl = downloadUrl;
+                this.username = username;
+                this.password = password;
+                this.rawPath = rawPath;
+            }
+
+            @Override
+            public Boolean invoke(java.io.File f, hudson.remoting.VirtualChannel channel) throws java.io.IOException, InterruptedException {
+                try {
+                    String path = rawPath;
+                    if (path == null || path.isEmpty()) {
+                        path = "~/.local/bin/codex";
+                    }
+                    // Expand leading ~ on the agent
+                    if (path.startsWith("~/")) {
+                        String home = System.getProperty("user.home");
+                        if (home != null && !home.isEmpty()) {
+                            path = home + path.substring(1);
                         }
                     }
 
-                    // Make the file executable
-                    java.io.File cliFile = new java.io.File(cliPath);
-                    cliFile.setExecutable(true);
+                    // Create HTTP connection with authentication if provided
+                    java.net.URL url = new java.net.URL(downloadUrl);
+                    java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
 
-                    return true;
-                } else {
-                    return false; // Download failed
+                    // Set authentication if username and password are provided
+                    if (username != null && !username.trim().isEmpty() &&
+                        password != null && !password.trim().isEmpty()) {
+                        String auth = username + ":" + password;
+                        String encodedAuth = java.util.Base64.getEncoder().encodeToString(auth.getBytes());
+                        connection.setRequestProperty("Authorization", "Basic " + encodedAuth);
+                    }
+
+                    connection.setRequestMethod("GET");
+                    connection.setConnectTimeout(30000); // 30 seconds timeout
+                    connection.setReadTimeout(60000); // 60 seconds timeout
+
+                    int responseCode = connection.getResponseCode();
+                    if (responseCode == 200) {
+                        // Create parent directory if it doesn't exist
+                        java.io.File cliFile = new java.io.File(path);
+                        java.io.File parentDir = cliFile.getParentFile();
+                        if (parentDir != null && !parentDir.exists()) {
+                            parentDir.mkdirs();
+                        }
+
+                        // Download the file
+                        try (java.io.InputStream inputStream = connection.getInputStream();
+                             java.io.FileOutputStream outputStream = new java.io.FileOutputStream(path)) {
+
+                            byte[] buffer = new byte[4096];
+                            int bytesRead;
+                            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                                outputStream.write(buffer, 0, bytesRead);
+                            }
+                        }
+
+                        // Make the file executable
+                        cliFile.setExecutable(true);
+
+                        return true;
+                    } else {
+                        return false; // Download failed
+                    }
+                } catch (Exception e) {
+                    throw new java.io.IOException("Failed to download and update CLI: " + e.getMessage(), e);
                 }
-            } catch (Exception e) {
-                return false; // Download failed with exception
+            }
+
+            @Override
+            public void checkRoles(org.jenkinsci.remoting.RoleChecker checker) throws SecurityException {
+                // Accept default; no special roles required
             }
         }
 

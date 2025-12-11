@@ -32,7 +32,7 @@
             <f:entry title="Default Model" field="defaultModel" description="Default model to use for analysis.">
                 <f:select />
                 <f:validateButton title="Update Model List" progress="Fetching available models from Codex CLI..."
-                                 method="doFetchAvailableModels" with="codexCliPath" />
+                                 method="fetchAvailableModels" with="codexCliPath" />
             </f:entry>
 
             <f:entry title="Timeout (seconds)" field="timeoutSeconds" description="Default timeout for analysis operations in seconds. Leave empty to use global configuration.">
@@ -46,7 +46,7 @@
             <f:entry title="MCP Servers" field="selectedMcpServers" description="Select MCP servers from those configured in ~/.codex/config.toml. Only shown when 'Enable MCP Servers' is checked.">
                 <f:select multiple="true" />
                 <f:validateButton title="Update MCP Servers List" progress="Fetching available MCP servers from Codex CLI..."
-                                 method="doFetchAvailableMcpServers" with="codexCliPath,configPath" />
+                                 method="fetchAvailableMcpServers" with="codexCliPath,configPath" />
                 <div style="margin-top: 5px; font-size: 11px; color: #666;">
                     ${instance.mcpServersCacheStatus}
                 </div>
@@ -64,7 +64,7 @@
 
             <f:entry title="Update Codex CLI" description="Manually download and update the Codex CLI from the configured download URL. Requires a valid download URL to be configured.">
                 <f:validateButton title="Update CLI"
-                                 method="doUpdateCodexCli"
+                                 method="updateCodexCli"
                                  with="codexCliPath,codexCliDownloadUrl,codexCliDownloadUsername,codexCliDownloadPassword" />
             </f:entry>
         </f:advanced>
