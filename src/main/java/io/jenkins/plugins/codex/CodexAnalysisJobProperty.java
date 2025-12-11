@@ -13,10 +13,14 @@ import hudson.util.ListBoxModel;
 import hudson.util.ArgumentListBuilder;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.Stapler;
 import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.verb.POST;
+import hudson.model.AbstractProject;
+import hudson.Util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -755,70 +759,112 @@ public class CodexAnalysisJobProperty extends JobProperty<Job<?, ?>> {
          * Test Codex CLI connection with node binding
          * This method tests the CLI in the context of the specific job/node
          */
-        public FormValidation doTestCodexCli(@QueryParameter("codexCliPath") String codexCliPath,
-                                           @QueryParameter("codexCliDownloadUrl") String codexCliDownloadUrl,
-                                           @QueryParameter("codexCliDownloadUsername") String codexCliDownloadUsername,
-                                           @QueryParameter("codexCliDownloadPassword") String codexCliDownloadPassword,
-                                           @QueryParameter("configPath") String configPath,
-                                           @QueryParameter("litellmApiKey") String litellmApiKey) {
+        @POST
+        public FormValidation doTestCodexCli(@AncestorInPath Job<?, ?> job, @QueryParameter String codexCliPath) {
             try {
-                // Get the current job property from the request context
-                CodexAnalysisJobProperty jobProperty = getCurrentJobProperty();
+                Jenkins j = Jenkins.get();
+                Node target = null;
+                String path = Util.fixEmptyAndTrim(codexCliPath);
 
-                // Use effective values from job configuration
-                String effectiveCliPath = jobProperty != null ? jobProperty.getEffectiveCodexCliPath() : "~/.local/bin/codex";
-                String effectiveCliDownloadUrl = jobProperty != null ? jobProperty.getEffectiveCodexCliDownloadUrl() : "";
-                String effectiveCliDownloadUsername = jobProperty != null ? jobProperty.getEffectiveCodexCliDownloadUsername() : "";
-                String effectiveCliDownloadPassword = jobProperty != null ? jobProperty.getEffectiveCodexCliDownloadPassword() : "";
-                String effectiveConfigPath = jobProperty != null ? jobProperty.getEffectiveConfigPath() : "~/.codex/config.toml";
-                String effectiveLitellmApiKey = jobProperty != null ? jobProperty.getEffectiveLitellmApiKey() : "sk-1234";
-
-                // Override with provided parameters if they are not empty
-                if (codexCliPath != null && !codexCliPath.trim().isEmpty()) {
-                    effectiveCliPath = codexCliPath;
-                }
-                if (codexCliDownloadUrl != null && !codexCliDownloadUrl.trim().isEmpty()) {
-                    effectiveCliDownloadUrl = codexCliDownloadUrl;
-                }
-                if (codexCliDownloadUsername != null && !codexCliDownloadUsername.trim().isEmpty()) {
-                    effectiveCliDownloadUsername = codexCliDownloadUsername;
-                }
-                if (codexCliDownloadPassword != null && !codexCliDownloadPassword.trim().isEmpty()) {
-                    effectiveCliDownloadPassword = codexCliDownloadPassword;
-                }
-                if (configPath != null && !configPath.trim().isEmpty()) {
-                    effectiveConfigPath = configPath;
-                }
-                if (litellmApiKey != null && !litellmApiKey.trim().isEmpty()) {
-                    effectiveLitellmApiKey = litellmApiKey;
-                }
-
-                if (effectiveCliPath == null || effectiveCliPath.trim().isEmpty()) {
-                    return FormValidation.error("Codex CLI path is not configured");
-                }
-
-                // Expand ~ to home directory for Ubuntu/Unix systems
-                effectiveCliPath = effectiveCliPath.replaceFirst("^~", System.getProperty("user.home"));
-
-                // Test CLI availability using a simple version check
-                // This will test the CLI on the node where the job will run
-                ProcessBuilder pb = new ProcessBuilder(effectiveCliPath, "--version");
-                Process process = pb.start();
-                int exitCode = process.waitFor();
-
-                if (exitCode == 0) {
-                    String message = "Codex CLI is accessible on this node with path: " + effectiveCliPath;
-                    if (jobProperty != null && jobProperty.isUseJobConfig()) {
-                        message += " (using job-level configuration)";
-                    } else {
-                        message += " (using global configuration)";
+                // Only try labeled agents for freestyle projects
+                if (job != null && job instanceof AbstractProject) {
+                    AbstractProject<?, ?> project = (AbstractProject<?, ?>) job;
+                    Label assigned = project.getAssignedLabel();
+                    if (assigned != null) {
+                        for (Node n : assigned.getNodes()) {
+                            if (n != null && n.toComputer() != null && n.toComputer().isOnline()) {
+                                target = n;
+                                break;
+                            }
+                        }
+                        if (target == null) {
+                            return FormValidation.error("No online agents match the job's label: '" + assigned.getExpression() + "'.");
+                        }
                     }
-                    return FormValidation.ok(message);
-                } else {
-                    return FormValidation.warning("Codex CLI returned exit code: " + exitCode + " with path: " + effectiveCliPath);
                 }
+
+                // For pipeline jobs or freestyle jobs without labels, use controller
+                if (target == null) {
+                    target = j; // fallback to controller
+                }
+
+                // If job-level path is not provided, use global configuration
+                if (path == null) {
+                    CodexAnalysisJobProperty jobProperty = job != null ? job.getProperty(CodexAnalysisJobProperty.class) : null;
+                    if (jobProperty != null) {
+                        path = Util.fixEmptyAndTrim(jobProperty.getEffectiveCodexCliPath());
+                    }
+                    if (path == null) {
+                        CodexAnalysisPlugin cfg = CodexAnalysisPlugin.get();
+                        String globalPath = (cfg != null) ? Util.fixEmptyAndTrim(cfg.getCodexCliPath()) : null;
+                        path = (globalPath != null) ? globalPath : "~/.local/bin/codex";
+                    }
+                }
+
+                FilePath root = target.getRootPath();
+                if (root == null) {
+                    return FormValidation.error("Unable to access workspace on target node.");
+                }
+
+                String version = root.act(new CliVersionCallable(path));
+                String where = (target == j) ? "controller" : target.getNodeName();
+                return FormValidation.ok("Codex CLI is working on " + where + "! Version: " + version);
             } catch (Exception e) {
-                return FormValidation.error("Failed to test Codex CLI on this node: " + e.getMessage());
+                return FormValidation.error("Failed to execute Codex CLI: " + e.getMessage());
+            }
+        }
+
+        // Callable executed on a remote node to get Codex CLI version
+        private static class CliVersionCallable implements FilePath.FileCallable<String> {
+            private final String rawPath;
+
+            CliVersionCallable(String rawPath) {
+                this.rawPath = rawPath;
+            }
+
+            @Override
+            public String invoke(java.io.File f, hudson.remoting.VirtualChannel channel) throws java.io.IOException, InterruptedException {
+                String path = rawPath;
+                if (path == null || path.isEmpty()) {
+                    path = "codex";
+                }
+                // Expand leading ~ on the agent
+                if (path.startsWith("~/")) {
+                    String home = System.getProperty("user.home");
+                    if (home != null && !home.isEmpty()) {
+                        path = home + path.substring(1);
+                    }
+                }
+
+                java.lang.ProcessBuilder pb = new java.lang.ProcessBuilder(path, "--version");
+                java.lang.Process proc = pb.start();
+                java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                try (java.io.InputStream is = proc.getInputStream()) {
+                    byte[] buf = new byte[4096];
+                    int r;
+                    while ((r = is.read(buf)) >= 0) {
+                        baos.write(buf, 0, r);
+                    }
+                }
+                int code = proc.waitFor();
+                if (code != 0) {
+                    // Try to capture stderr for better diagnostics
+                    java.io.ByteArrayOutputStream err = new java.io.ByteArrayOutputStream();
+                    try (java.io.InputStream es = proc.getErrorStream()) {
+                        byte[] buf = new byte[4096];
+                        int r;
+                        while ((r = es.read(buf)) >= 0) {
+                            err.write(buf, 0, r);
+                        }
+                    }
+                    throw new java.io.IOException("Codex CLI --version failed with exit code " + code + ": " + err.toString(java.nio.charset.StandardCharsets.UTF_8));
+                }
+                return baos.toString(java.nio.charset.StandardCharsets.UTF_8).trim();
+            }
+
+            @Override
+            public void checkRoles(org.jenkinsci.remoting.RoleChecker checker) throws SecurityException {
+                // Accept default; no special roles required
             }
         }
 

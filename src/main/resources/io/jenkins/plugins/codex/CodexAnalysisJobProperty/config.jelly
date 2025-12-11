@@ -58,8 +58,8 @@
 
             <f:entry title="Test Codex CLI" description="Test the Codex CLI configuration on the node where this job will run. This ensures proper node binding and CLI accessibility.">
                 <f:validateButton title="Test Codex CLI"
-                                 method="doTestCodexCli"
-                                 with="codexCliPath,codexCliDownloadUrl,codexCliDownloadUsername,codexCliDownloadPassword,configPath,litellmApiKey" />
+                                 method="testCodexCli"
+                                 with="codexCliPath" />
             </f:entry>
 
             <f:entry title="Update Codex CLI" description="Manually download and update the Codex CLI from the configured download URL. Requires a valid download URL to be configured.">
