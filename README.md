@@ -1,3 +1,5 @@
+**Language**: [English](README.md) | [中文](README_cn.md)
+
 # Codex Plugin for Jenkins
 
 A Jenkins plugin that provides AI-powered analysis capabilities for pipeline stages, steps, and script output using the [Codex CLI](https://github.com/openai/codex).
