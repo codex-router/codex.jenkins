@@ -8,6 +8,7 @@ A Jenkins plugin that provides AI-powered analysis capabilities for pipeline sta
 
 - **Pipeline Step Analysis**: Use the `codexAnalysis` step in your Pipeline scripts
 - **Interactive Chat**: Use the `codexChat` step for real-time interactive chat sessions with Codex CLI
+- **Build Dropdown Chat**: Access Codex Chat directly from the build dropdown menu (next to "Timings") for every job
 - **Stage-level Analysis**: Automatic analysis of pipeline stages with context gathering
 - **Freestyle Job Support**: Add Codex analysis or interactive chat as build steps in freestyle jobs
 - **Multiple Analysis Types**: Build, test, deployment, security, performance, and quality analysis
@@ -300,6 +301,45 @@ pipeline {
    - **Additional Parameters**: Custom parameters in key=value format
 
 **Note**: All chat conversations are streamed to the Jenkins console output in real-time, making them visible for all Jenkins jobs.
+
+### Build Dropdown Chat
+
+The plugin automatically adds a **"Codex Chat"** option to the build dropdown menu (next to "Timings") for every job. This allows you to interact with Codex CLI directly from any build without modifying your pipeline or job configuration.
+
+![Codex Chat in Build Dropdown](chat-1.png)
+
+**How to use:**
+
+1. Navigate to any build in Jenkins
+2. Click on the build dropdown menu (the small arrow next to the build number)
+3. Select **"Codex Chat"** from the menu
+4. You'll see a chat interface where you can:
+
+![Codex Chat Interface](chat-2.png)
+   - Enter an initial message to start the conversation
+   - Provide optional context about the build (logs, environment, etc.)
+   - Send messages and receive responses from Codex CLI
+   - View the conversation history
+
+**Features:**
+- **Automatic Availability**: Available for every build automatically - no configuration needed
+- **Uses Configured CLI Path**: Automatically uses the Codex CLI path from global or job configuration
+- **Build Context**: Chat executes in the build's workspace context with access to build environment
+- **Interactive Interface**: Web-based chat interface with message history
+- **Real-time Responses**: Get immediate responses from Codex CLI
+
+**Configuration:**
+- The chat feature uses the Codex CLI path configured in:
+  - Job-level configuration (if "Use Job-Level Configuration" is enabled)
+  - Global configuration (as fallback)
+- All chat interactions respect the configured model, timeout, and MCP server settings
+
+**Example Use Cases:**
+- Ask questions about build failures
+- Get explanations of build logs
+- Request suggestions for improving build performance
+- Analyze build artifacts or test results
+- Get help with deployment issues
 
 ### Analysis Types
 

@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+<l:layout title="Codex Chat - Build #${it.run.number}">
+    <l:header>
+        <st:include it="${it.run}" page="sidepanel.jelly" />
+    </l:header>
+
+    <l:main-panel>
+        <h1>
+            <l:icon class="symbol-chat" />
+            Codex Chat - Build #${it.run.number}
+        </h1>
+
+        <div id="chat-container" style="margin: 20px 0;">
+            <div id="chat-messages" style="background: #f5f5f5; padding: 15px; border-radius: 5px; min-height: 400px; max-height: 600px; overflow-y: auto; margin-bottom: 20px;">
+                <div class="chat-message system">
+                    <strong>System:</strong> Codex Chat session started. You can now chat with Codex CLI.
+                </div>
+            </div>
+
+            <form id="chat-form" method="post" action="chatQuery" style="margin: 20px 0;">
+                <f:entry title="Your Message">
+                    <f:textarea id="message-input" name="message" value=""
+                                style="width: 100%; min-height: 100px;" placeholder="Enter your message here..." />
+                </f:entry>
+
+                <f:entry title="Context (optional)">
+                    <f:textarea id="context-input" name="context" value=""
+                                style="width: 100%; min-height: 80px;" placeholder="Additional context (e.g., build logs, environment info)" />
+                </f:entry>
+
+                <f:block>
+                    <f:submit value="Send Message" />
+                </f:block>
+            </form>
+
+            <div id="status" style="margin: 10px 0; padding: 10px; display: none;"></div>
+        </div>
+
+        <div style="margin: 20px 0; padding: 15px; background: #e3f2fd; border-radius: 5px;">
+            <h3>Information:</h3>
+            <p><strong>Codex CLI Path:</strong> ${it.effectiveCodexCliPath}</p>
+            <p><strong>Build:</strong> <a href="${it.run.url}">Build #${it.run.number}</a></p>
+            <p><strong>Workspace:</strong> N/A</p>
+        </div>
+
+        <style>
+            .chat-message {
+                margin: 10px 0;
+                padding: 10px;
+                border-radius: 5px;
+            }
+            .chat-message.user {
+                background: #e3f2fd;
+                text-align: right;
+            }
+            .chat-message.codex {
+                background: #f1f8e9;
+            }
+            .chat-message.system {
+                background: #fff3e0;
+                font-style: italic;
+            }
+            .chat-message.error {
+                background: #ffebee;
+                color: #c62828;
+            }
+            #status {
+                padding: 10px;
+                border-radius: 5px;
+            }
+            #status.info {
+                background: #e3f2fd;
+            }
+            #status.error {
+                background: #ffebee;
+                color: #c62828;
+            }
+        </style>
+
+        <script>
+            <![CDATA[
+            (function() {
+                var chatForm = document.getElementById('chat-form');
+                var messageInput = document.getElementById('message-input');
+                var contextInput = document.getElementById('context-input');
+                var chatMessages = document.getElementById('chat-messages');
+                var statusDiv = document.getElementById('status');
+                var sendButton = chatForm.querySelector('input[type="submit"]');
+                var clearButton = document.createElement('button');
+                clearButton.type = 'button';
+                clearButton.textContent = 'Clear Chat';
+                clearButton.style.marginLeft = '10px';
+                chatForm.appendChild(clearButton);
+
+                function showStatus(message, type) {
+                    statusDiv.textContent = message;
+                    statusDiv.className = type || 'info';
+                    statusDiv.style.display = 'block';
+                    setTimeout(function() {
+                        statusDiv.style.display = 'none';
+                    }, 5000);
+                }
+
+                function addMessage(text, type) {
+                    var messageDiv = document.createElement('div');
+                    messageDiv.className = 'chat-message ' + (type || 'system');
+                    messageDiv.innerHTML = '<strong>' + (type === 'user' ? 'You' : type === 'codex' ? 'Codex' : 'System') + ':</strong> ' +
+                        text.replace(/\n/g, '<br>');
+                    chatMessages.appendChild(messageDiv);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+
+                chatForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+
+                    var message = messageInput.value.trim();
+                    if (!message) {
+                        showStatus('Please enter a message', 'error');
+                        return;
+                    }
+
+                    addMessage(message, 'user');
+                    sendButton.disabled = true;
+                    showStatus('Sending message...', 'info');
+
+                    var formData = new FormData(chatForm);
+                    fetch(chatForm.action, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(function(response) {
+                        return response.json();
+                    })
+                    .then(function(data) {
+                        sendButton.disabled = false;
+                        if (data.success) {
+                            addMessage(data.response, 'codex');
+                            messageInput.value = '';
+                        } else {
+                            addMessage('Error: ' + data.error, 'error');
+                            showStatus('Error: ' + data.error, 'error');
+                        }
+                    })
+                    .catch(function(error) {
+                        sendButton.disabled = false;
+                        addMessage('Error: ' + error.message, 'error');
+                        showStatus('Error: ' + error.message, 'error');
+                    });
+                });
+
+                clearButton.addEventListener('click', function() {
+                    chatMessages.innerHTML = '<div class="chat-message system"><strong>System:</strong> Chat cleared.</div>';
+                });
+
+                // If there's an initial message, send it automatically
+                var initialMessage = messageInput.value.trim();
+                if (initialMessage) {
+                    setTimeout(function() {
+                        chatForm.dispatchEvent(new Event('submit'));
+                    }, 500);
+                }
+            })();
+            ]]>
+        </script>
+    </l:main-panel>
+</l:layout>
+
+</j:jelly>

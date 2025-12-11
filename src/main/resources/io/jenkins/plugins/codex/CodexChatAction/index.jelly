@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+<l:layout title="Codex Chat - Build #${it.run.number}">
+    <l:header>
+        <st:include it="${it.run}" page="sidepanel.jelly" />
+    </l:header>
+
+    <l:main-panel>
+        <h1>
+            <l:icon class="symbol-chat" />
+            Codex Chat - Build #${it.run.number}
+        </h1>
+
+        <div style="margin: 20px 0;">
+            <p>Interactive chat with Codex CLI for this build.</p>
+            <p><strong>Codex CLI Path:</strong> ${it.effectiveCodexCliPath}</p>
+
+            <j:if test="${!it.codexAvailable}">
+                <div class="alert alert-warning" style="background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                    <strong>Warning:</strong> Codex CLI may not be available at the configured path.
+                    Please verify the path in <a href="${rootURL}/configure">Global Configuration</a> or
+                    <a href="${it.run.parent.url}configure">Job Configuration</a>.
+                </div>
+            </j:if>
+        </div>
+
+        <form method="post" action="startChat" name="chatForm" style="margin: 20px 0;">
+            <f:entry title="Initial Message (optional)" description="Enter an initial message to start the chat session">
+                <f:textarea name="initialMessage" value="" style="width: 100%; min-height: 100px;" />
+            </f:entry>
+
+            <f:entry title="Context (optional)" description="Additional context for the chat session (e.g., build logs, environment info)">
+                <f:textarea name="context" value="" style="width: 100%; min-height: 80px;" />
+            </f:entry>
+
+            <f:block>
+                <f:submit value="Start Chat Session" />
+            </f:block>
+        </form>
+
+        <div style="margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 5px;">
+            <h3>How to use:</h3>
+            <ol>
+                <li>Optionally enter an initial message to start the conversation</li>
+                <li>Optionally provide context about the build (logs, environment, etc.)</li>
+                <li>Click "Start Chat Session" to launch an interactive chat with Codex CLI</li>
+                <li>The chat session will run in the build console, allowing you to interact with Codex CLI</li>
+            </ol>
+            <p><strong>Note:</strong> The chat session will execute in the build's workspace context, using the configured Codex CLI path from global or job configuration.</p>
+        </div>
+
+        <style>
+            .alert {
+                margin: 20px 0;
+            }
+            form {
+                background: #fff;
+                padding: 20px;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+            }
+            f:entry {
+                margin: 15px 0;
+            }
+        </style>
+    </l:main-panel>
+</l:layout>
+
+</j:jelly>

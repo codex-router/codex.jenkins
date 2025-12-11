@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <!-- Codex Chat Plugin Icon -->
+
+  <!-- Background circle -->
+  <circle cx="12" cy="12" r="11" fill="#4CAF50" stroke="#388E3C" stroke-width="1"/>
+
+  <!-- Chat bubble -->
+  <path d="M6 8 C6 6, 7 5, 9 5 L15 5 C17 5, 18 6, 18 8 L18 14 C18 16, 17 17, 15 17 L11 17 L7 20 L7 17 L9 17 C7 17, 6 16, 6 14 Z"
+        fill="white" stroke="#388E3C" stroke-width="0.5"/>
+
+  <!-- Chat dots (indicating conversation) -->
+  <circle cx="9" cy="10" r="1" fill="#388E3C"/>
+  <circle cx="12" cy="10" r="1" fill="#388E3C"/>
+  <circle cx="15" cy="10" r="1" fill="#388E3C"/>
+
+  <!-- Speech lines -->
+  <path d="M9 13 L15 13" stroke="#388E3C" stroke-width="1" stroke-linecap="round"/>
+  <path d="M9 15 L13 15" stroke="#388E3C" stroke-width="1" stroke-linecap="round"/>
+</svg>
+
